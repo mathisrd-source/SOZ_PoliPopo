@@ -327,14 +327,41 @@
   </div>
 </div>
 
-<script>
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import {
+    getDatabase,
+    ref,
+    set,
+    onValue
+  } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyBs-d39FKBI-CP-ZapRL0XzDg5vDWyMTrw",
+    authDomain: "mon-gestionnaire-soz-polipopo.firebaseapp.com",
+    databaseURL: "https://mon-gestionnaire-soz-polipopo-default-rtdb.europe-west1.firebasedatabase.app/",
+    projectId: "mon-gestionnaire-soz-polipopo",
+    storageBucket: "mon-gestionnaire-soz-polipopo.firebasestorage.app",
+    messagingSenderId: "939113848379",
+    appId: "1:939113848379:web:bde8b71458274b73d7061e"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+
+  window.firebaseDB = db;
+  window.firebaseRef = ref;
+  window.firebaseSet = set;
+  window.firebaseOnValue = onValue;
+</script>
+  
+<script type="module">
 // STATE
 let state = { items: [], recipes: [], contacts: [], projects: [] };
 let currentRecipeIngs = [], currentOps = [];
 let editingContactId = null, editingProjectId = null;
 let projFilter = 'all';
 
-const STORAGE_KEY = 'gestionnaire-data-v1';
 const COLORS = [
   ['#E1F5EE','#0F6E56'],['#E6F1FB','#185FA5'],['#FAEEDA','#854F0B'],
   ['#FBEAF0','#993556'],['#EAF3DE','#3B6D11'],['#FCEBEB','#A32D2D'],
@@ -344,18 +371,31 @@ const STATUS_LABELS = { active: 'En cours', waiting: 'En attente', urgent: 'Urge
 const STATUS_BADGE  = { active: 'badge-green', waiting: 'badge-amber', urgent: 'badge-red', done: 'badge-gray' };
 const STATUS_DOT    = { active: 'dot-active', waiting: 'dot-waiting', urgent: 'dot-urgent', done: 'dot-done' };
 
-// PERSISTENCE — localStorage (autonome pour fichier hébergé)
+// DATA
 function loadData() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) state = Object.assign({ items:[], recipes:[], contacts:[], projects:[] }, JSON.parse(raw));
-  } catch(e) {}
-  render();
-}
-function saveData() {
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e) {}
+  const dataRef = firebaseRef(firebaseDB, 'gestionnaire');
+
+  firebaseOnValue(dataRef, (snapshot) => {
+    const data = snapshot.val();
+
+    if (data) {
+      state = Object.assign({
+        items: [],
+        recipes: [],
+        contacts: [],
+        projects: []
+      }, data);
+    }
+
+    render();
+  });
 }
 
+function saveData() {
+  const dataRef = firebaseRef(firebaseDB, 'gestionnaire');
+  firebaseSet(dataRef, state);
+}  
+  
 // TABS
 function switchTab(t) {
   const tabs = ['stock','fab','contacts','projects'];
