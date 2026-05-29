@@ -20,14 +20,6 @@
   --radius:10px;--radius-sm:6px;
   --shadow:0 1px 3px rgba(0,0,0,.06),0 1px 2px rgba(0,0,0,.04);
   --shadow-md:0 4px 12px rgba(0,0,0,.08),0 2px 4px rgba(0,0,0,.05);
-    <!-- Content Security Policy (important pour corriger l'erreur eval) -->
-    <meta http-equiv="Content-Security-Policy" 
-          content="default-src 'self'; 
-                   script-src 'self' 'unsafe-eval' https://www.gstatic.com https://*.firebaseio.com https://*.googleapis.com;">
-
-    <!-- Firebase SDK (à mettre dans le <head>) -->
-    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
 }
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
@@ -494,33 +486,14 @@ input[type=color]{padding:2px 4px;width:36px;height:32px;cursor:pointer}
 // ║  COLLE ICI TA CONFIG FIREBASE                           ║
 // ╚══════════════════════════════════════════════════════════╝
 const firebaseConfig = {
-  apiKey: "AIzaSyAYxeEWQNCdjMcgtud9THWHGY2ZatfK9ig",
-  authDomain: "data-polipopo.firebaseapp.com",
-  databaseURL: "https://data-polipopo-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "data-polipopo",
-  storageBucket: "data-polipopo.firebasestorage.app",
-  messagingSenderId: "359231173160",
-  appId: "1:359231173160:web:e232475bf1ca396d963b1d"
+  apiKey:            "COLLE_ICI_apiKey",
+  authDomain:        "COLLE_ICI_authDomain",
+  databaseURL:       "COLLE_ICI_databaseURL",
+  projectId:         "COLLE_ICI_projectId",
+  storageBucket:     "COLLE_ICI_storageBucket",
+  messagingSenderId: "COLLE_ICI_messagingSenderId",
+  appId:             "COLLE_ICI_appId"
 };
-
-// Initialisation unique de Firebase
-    if (!firebase.apps.length) {
-        firebase.initializeApp(firebaseConfig);
-        console.log("✅ Firebase initialisé avec succès");
-    }
-
-    const db = firebase.database();
-
-    // Suivi de la connexion (pour voir "reconnexion")
-    const connectedRef = db.ref('.info/connected');
-    connectedRef.on('value', (snap) => {
-        const statusEl = document.getElementById('status') || document.createElement('div');
-        if (snap.val() === true) {
-            console.log("%c✅ Firebase CONNECTÉ", "color: green; font-weight: bold");
-        } else {
-            console.log("%c🔄 En reconnexion...", "color: orange; font-weight: bold");
-        }
-    });
 // ══════════════════════════════════════════════════════════
 
 const app = firebase.initializeApp(firebaseConfig);
