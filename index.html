@@ -120,6 +120,32 @@ input[type=color]{padding:2px 4px;width:36px;height:32px;cursor:pointer}
 .contact-info{font-size:12px;color:var(--text2);margin-bottom:2px;display:flex;gap:5px;align-items:center}
 .contact-notes{font-size:12px;color:var(--text2);font-style:italic;margin-top:6px;line-height:1.4}
 
+/* PROJECTS */
+.project-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:14px 18px;margin-bottom:12px;box-shadow:var(--shadow)}
+.project-card.status-urgent{border-left:3px solid var(--red)}
+.project-card.status-active{border-left:3px solid var(--green)}
+.project-card.status-waiting{border-left:3px solid var(--amber)}
+.project-card.status-done{border-left:3px solid var(--text3);opacity:.8}
+.project-header{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:6px}
+.project-name{font-weight:600;font-size:14px}
+.project-meta{display:flex;align-items:center;gap:8px;margin-top:3px;flex-wrap:wrap}
+.project-desc{font-size:13px;color:var(--text2);margin-bottom:10px;line-height:1.5}
+.progress-bar{height:4px;background:var(--bg2);border-radius:999px;overflow:hidden;margin:8px 0}
+.progress-fill{height:100%;background:var(--green);border-radius:999px;transition:width .4s}
+.ops-list{margin-top:6px}
+.op-row{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--bg2);font-size:13px}
+.op-row:last-child{border-bottom:none}
+.op-check{width:14px;height:14px;cursor:pointer;accent-color:var(--green);flex-shrink:0}
+.op-name{flex:1}.op-name.done{text-decoration:line-through;color:var(--text3)}
+.dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;display:inline-block}
+.dot-active{background:var(--green)}.dot-waiting{background:var(--amber)}.dot-urgent{background:var(--red)}.dot-done{background:var(--text3)}
+.filters{display:flex;gap:6px;flex-wrap:wrap}
+.filter-btn{padding:4px 11px;font-size:12px;border:1px solid var(--border);border-radius:999px;background:var(--card);cursor:pointer;color:var(--text2);font-family:'DM Sans',sans-serif;transition:all .15s}
+.filter-btn:hover{border-color:var(--green);color:var(--green)}
+.filter-btn.active{background:var(--green);color:white;border-color:var(--green)}
+.top-bar{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px}
+.date-badge{font-family:'DM Mono',monospace;font-size:11px;color:var(--text2)}
+
 /* HAUTE CRIMINALITE */
 .hc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
 .hc-group-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow)}
@@ -188,6 +214,9 @@ input[type=color]{padding:2px 4px;width:36px;height:32px;cursor:pointer}
     </button>
     <button class="tab" onclick="switchTab('contacts')">
       <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>Contacts
+    </button>
+    <button class="tab" onclick="switchTab('projects')">
+      <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>Projets
     </button>
     <button class="tab tab-hc" onclick="switchTab('hc')">
       <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>Haute Criminalité
@@ -274,6 +303,28 @@ input[type=color]{padding:2px 4px;width:36px;height:32px;cursor:pointer}
   <div id="contact-empty" class="empty" style="display:none">Aucun contact.</div>
 </div>
 
+<!-- ═══ PROJETS ════════════════════════════════════════════════ -->
+<div class="section" id="sec-projects">
+  <div class="stats">
+    <div class="stat"><div class="stat-num" id="pstat-total">–</div><div class="stat-label">Projets</div></div>
+    <div class="stat"><div class="stat-num" id="pstat-active">–</div><div class="stat-label">En cours</div></div>
+    <div class="stat"><div class="stat-num" id="pstat-done">–</div><div class="stat-label">Terminés</div></div>
+    <div class="stat"><div class="stat-num" id="pstat-ops">–</div><div class="stat-label">Opérations</div></div>
+  </div>
+  <div class="top-bar">
+    <div class="filters">
+      <button class="filter-btn active" onclick="setFilter('all',this)">Tous</button>
+      <button class="filter-btn" onclick="setFilter('active',this)">En cours</button>
+      <button class="filter-btn" onclick="setFilter('waiting',this)">En attente</button>
+      <button class="filter-btn" onclick="setFilter('urgent',this)">Urgent</button>
+      <button class="filter-btn" onclick="setFilter('done',this)">Terminés</button>
+    </div>
+    <button class="btn btn-primary" onclick="openProjectModal()">+ Nouveau projet</button>
+  </div>
+  <div id="project-list"></div>
+  <div id="proj-empty" class="empty" style="display:none">Aucun projet.</div>
+</div>
+
 <!-- ═══ HAUTE CRIMINALITÉ ══════════════════════════════════════ -->
 <div class="section" id="sec-hc">
   <div class="stats">
@@ -352,6 +403,39 @@ input[type=color]{padding:2px 4px;width:36px;height:32px;cursor:pointer}
   </div>
 </div>
 
+<!-- ── MODAL PROJET ── -->
+<div class="modal-overlay" id="project-modal" style="display:none" onclick="closeModalIf(event,'project-modal')">
+  <div class="modal">
+    <div class="modal-title" id="pmodal-title">Nouveau projet</div>
+    <div class="field"><label>Nom *</label><input type="text" id="p-name"/></div>
+    <div class="field"><label>Description</label><textarea id="p-desc" placeholder="Objectif, contexte…"></textarea></div>
+    <div class="field-row">
+      <div class="field"><label>Statut</label>
+        <select id="p-status">
+          <option value="active">En cours</option>
+          <option value="waiting">En attente</option>
+          <option value="urgent">Urgent</option>
+          <option value="done">Terminé</option>
+        </select>
+      </div>
+      <div class="field"><label>Date limite</label><input type="date" id="p-date"/></div>
+    </div>
+    <div class="field">
+      <label>Opérations</label>
+      <div id="ops-tags" style="margin-bottom:6px;min-height:22px"></div>
+      <div class="add-ing-row">
+        <input type="text" id="new-op" placeholder="Ajouter une opération…"/>
+        <button class="btn btn-sm" onclick="addOp()">+</button>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button id="p-del-btn" class="btn btn-danger left" onclick="deleteProject()" style="display:none">Supprimer</button>
+      <button class="btn" onclick="closeModal('project-modal')">Annuler</button>
+      <button class="btn btn-primary" onclick="saveProject()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
 <!-- ── MODAL APPARTEMENT ── -->
 <div class="modal-overlay" id="apt-modal" style="display:none" onclick="closeModalIf(event,'apt-modal')">
   <div class="modal">
@@ -411,228 +495,198 @@ const firebaseConfig = {
   appId: "1:359231173160:web:e232475bf1ca396d963b1d"
 };
 // ══════════════════════════════════════════════════════════
+
 const app = firebase.initializeApp(firebaseConfig);
 const db  = firebase.database();
 const REF = db.ref('gestionnaire');
 
-const EMPTY_STATE = {items:[], apartments:[], recipes:[], contacts:[], hcGroups:[], transactions:[]};
+const EMPTY_STATE = {items:[],apartments:[],recipes:[],contacts:[],projects:[],hcGroups:[],transactions:[]};
 let state = JSON.parse(JSON.stringify(EMPTY_STATE));
-let currentRecipeIngs = [];
-let editingContactId = null;
-let editingAptId = null;
-let editingHCGroupId = null;
-let editingHCProductId = null;
-let editingHCProductGroupId = null;
-let activeApt = 'all';
-let finFilter = 'all';
-let finTypeFilter = 'all';
-let isRemote = false;
+let currentRecipeIngs=[], currentOps=[];
+let editingContactId=null, editingProjectId=null;
+let editingAptId=null, editingHCGroupId=null, editingHCProductId=null, editingHCProductGroupId=null;
+let projFilter='all', activeApt='all', finFilter='all', finTypeFilter='all';
 
-const COLORS = [['#E1F5EE','#0F6E56'],['#E6F1FB','#185FA5'],['#FAEEDA','#854F0B'],['#FBEAF0','#993556'],['#EAF3DE','#3B6D11'],['#FCEBEB','#A32D2D'],['#EEEDFE','#534AB7'],['#F1EFE8','#5F5E5A']];
+const COLORS=[['#E1F5EE','#0F6E56'],['#E6F1FB','#185FA5'],['#FAEEDA','#854F0B'],['#FBEAF0','#993556'],['#EAF3DE','#3B6D11'],['#FCEBEB','#A32D2D'],['#EEEDFE','#534AB7'],['#F1EFE8','#5F5E5A']];
+const SL={active:'En cours',waiting:'En attente',urgent:'Urgent',done:'Terminé'};
+const SB={active:'badge-green',waiting:'badge-amber',urgent:'badge-red',done:'badge-gray'};
+const SD={active:'dot-active',waiting:'dot-waiting',urgent:'dot-urgent',done:'dot-done'};
 
 // ── FIREBASE ──────────────────────────────────────────────────
-function setSync(s, msg){
-  const d = document.getElementById('sync-dot');
-  const l = document.getElementById('sync-label');
-  d.className = 'sync-dot ' + s;
-  l.textContent = msg;
-  l.style.color = s === 'connected' ? 'var(--green-text)' : s === 'error' ? 'var(--red-text)' : '';
+// Principe : chaque collection a son propre listener et ses propres fonctions
+// de sauvegarde granulaires → pas de conflit entre utilisateurs simultanés.
+
+function setSync(s,msg){
+  const d=document.getElementById('sync-dot'),l=document.getElementById('sync-label');
+  d.className='sync-dot '+s; l.textContent=msg;
+  l.style.color=s==='connected'?'var(--green-text)':s==='error'?'var(--red-text)':'';
 }
+function updateSyncTime(){
+  const now=new Date();
+  document.getElementById('sync-time').textContent='Sync '+now.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+}
+function toArr(val){ return val ? (Array.isArray(val) ? val : Object.values(val)) : []; }
 
-REF.on('value', snap => {
-  const data = snap.val();
-  isRemote = true;
-  state = Object.assign(JSON.parse(JSON.stringify(EMPTY_STATE)), data || {});
-  
-  ['items','apartments','recipes','contacts','hcGroups','transactions'].forEach(k => {
-    if (state[k] && !Array.isArray(state[k])) state[k] = Object.values(state[k]);
-    else if (!state[k]) state[k] = [];
-  });
-
-  state.hcGroups.forEach(g => {
-    if (g.products && !Array.isArray(g.products)) g.products = Object.values(g.products);
-    else if (!g.products) g.products = [];
-  });
-
-  render();
-  setSync('connected', '● Connecté — synchronisé');
-  const now = new Date();
-  document.getElementById('sync-time').textContent = 'Sync ' + now.toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
-  isRemote = false;
-}, () => setSync('error', '✕ Erreur de connexion'));
-
-db.ref('.info/connected').on('value', s => {
-  if (!s.val()) setSync('connecting', 'Reconnexion…');
+// Un listener par collection — chaque écriture ne touche qu'un seul nœud
+const COLLECTIONS = ['items','apartments','recipes','contacts','projects','hcGroups','transactions'];
+let readyCount = 0;
+COLLECTIONS.forEach(col => {
+  db.ref('gestionnaire/'+col).on('value', snap => {
+    const raw = snap.val();
+    if(col === 'hcGroups'){
+      const groups = toArr(raw);
+      groups.forEach(g=>{ g.products = toArr(g.products); });
+      state[col] = groups;
+    } else {
+      state[col] = toArr(raw);
+    }
+    if(++readyCount >= COLLECTIONS.length){ setSync('connected','● Connecté — synchronisé'); updateSyncTime(); }
+    render();
+    // Réinitialise le compteur après le premier cycle complet pour les updates suivants
+    if(readyCount > COLLECTIONS.length) readyCount = COLLECTIONS.length;
+  }, ()=>setSync('error','✕ Erreur — vérifier la config Firebase'));
 });
+db.ref('.info/connected').on('value',s=>{if(!s.val())setSync('connecting','Reconnexion…');});
 
-function save(){
-  if (!isRemote) REF.set(state).catch(() => setSync('error', '✕ Sauvegarde échouée'));
+// ── FONCTIONS SAVE GRANULAIRES ────────────────────────────────
+// Écriture d'un seul élément (set)
+function fbSet(col, id, data){ db.ref('gestionnaire/'+col+'/'+id).set(data).catch(e=>setSync('error','✕ '+e.message)); }
+// Suppression d'un seul élément
+function fbDel(col, id){ db.ref('gestionnaire/'+col+'/'+id).remove().catch(e=>setSync('error','✕ '+e.message)); }
+// Mise à jour atomique d'une quantité (transaction = thread-safe, anti-conflit)
+function fbQtyTransaction(itemId, delta){
+  db.ref('gestionnaire/items/'+itemId+'/qty').transaction(current=>{
+    return Math.max(0, (current||0) + delta);
+  }).catch(e=>setSync('error','✕ '+e.message));
 }
+// Sauvegarde d'un groupe HC avec ses produits
+function fbSetHCGroup(g){ db.ref('gestionnaire/hcGroups/'+g.id).set(g).catch(e=>setSync('error','✕ '+e.message)); }
+// Sauvegarde d'un seul produit dans un groupe HC
+function fbSetHCProduct(groupId, p){ db.ref('gestionnaire/hcGroups/'+groupId+'/products/'+p.id).set(p).catch(e=>setSync('error','✕ '+e.message)); }
+function fbDelHCProduct(groupId, productId){ db.ref('gestionnaire/hcGroups/'+groupId+'/products/'+productId).remove().catch(e=>setSync('error','✕ '+e.message)); }
 
 // ── TABS ──────────────────────────────────────────────────────
 function switchTab(t){
-  const names = ['stock','fab','contacts','hc','finances'];
-  document.querySelectorAll('.tab').forEach((el, i) => {
-    el.classList.toggle('active', names[i] === t);
-  });
-  
-  document.querySelectorAll('.section').forEach(el => el.classList.remove('active'));
-  document.getElementById('sec-' + t).classList.add('active');
-
-  if (t === 'fab') renderFab();
-  if (t === 'hc') renderHC();
-  if (t === 'finances') renderFinances();
+  const names=['stock','fab','contacts','projects','hc','finances'];
+  document.querySelectorAll('.tab').forEach((el,i)=>el.classList.toggle('active',names[i]===t));
+  document.querySelectorAll('.section').forEach(el=>el.classList.remove('active'));
+  document.getElementById('sec-'+t).classList.add('active');
+  if(t==='fab') renderFab();
+  if(t==='projects') renderProjects();
+  if(t==='hc') renderHC();
+  if(t==='finances') renderFinances();
 }
-
-function fmt(n){
-  return n === undefined || n === null ? 0 : n % 1 === 0 ? n : parseFloat(n.toFixed(2));
-}
-
-function money(n){
-  return fmt(n).toLocaleString('fr-FR') + '$';
-}
+function fmt(n){return n===undefined||n===null?0:n%1===0?n:parseFloat(n.toFixed(2));}
+function money(n){return fmt(n).toLocaleString('fr-FR')+'$';}
 
 // ── APPARTEMENTS ─────────────────────────────────────────────
 function addApartment(){
-  const name = document.getElementById('apt-name').value.trim();
-  if (!name) return;
-  const addr = document.getElementById('apt-addr').value.trim();
-  state.apartments.push({id: Date.now().toString(), name, addr});
-  save();
-  document.getElementById('apt-name').value = '';
-  document.getElementById('apt-addr').value = '';
+  const name=document.getElementById('apt-name').value.trim(); if(!name) return;
+  const addr=document.getElementById('apt-addr').value.trim();
+  const apt={id:Date.now().toString(),name,addr};
+  fbSet('apartments',apt.id,apt);
+  document.getElementById('apt-name').value='';
+  document.getElementById('apt-addr').value='';
 }
-
 function openAptModal(id){
-  editingAptId = id;
-  const a = state.apartments.find(x => x.id === id);
-  if (!a) return;
-  document.getElementById('apt-edit-name').value = a.name;
-  document.getElementById('apt-edit-addr').value = a.addr || '';
-  document.getElementById('apt-modal').style.display = 'flex';
+  editingAptId=id;
+  const a=state.apartments.find(x=>x.id===id); if(!a) return;
+  document.getElementById('apt-edit-name').value=a.name;
+  document.getElementById('apt-edit-addr').value=a.addr||'';
+  document.getElementById('apt-modal').style.display='flex';
 }
-
 function saveApartment(){
-  const a = state.apartments.find(x => x.id === editingAptId);
-  if (!a) return;
-  const name = document.getElementById('apt-edit-name').value.trim();
-  if (!name) return;
-  a.name = name;
-  a.addr = document.getElementById('apt-edit-addr').value.trim();
-  closeModal('apt-modal');
-  save();
+  const a=state.apartments.find(x=>x.id===editingAptId); if(!a) return;
+  const name=document.getElementById('apt-edit-name').value.trim(); if(!name) return;
+  a.name=name; a.addr=document.getElementById('apt-edit-addr').value.trim();
+  closeModal('apt-modal'); fbSet('apartments',a.id,a);
 }
-
 function deleteApartment(){
-  if (!confirm('Supprimer cet appartement ? Les articles liés seront dissociés.')) return;
-  state.apartments = state.apartments.filter(x => x.id !== editingAptId);
-  state.items.forEach(it => {
-    if (it.aptId === editingAptId) it.aptId = '';
-  });
+  if(!confirm('Supprimer cet appartement ? Les articles liés seront dissociés.')) return;
+  // Dissocie les articles liés
+  state.items.filter(it=>it.aptId===editingAptId).forEach(it=>{ it.aptId=''; fbSet('items',it.id,it); });
+  fbDel('apartments',editingAptId);
   closeModal('apt-modal');
-  save();
 }
-
 function renderAptList(){
-  const el = document.getElementById('apt-list');
-  if (!state.apartments.length){ el.innerHTML = ''; return; }
-  el.innerHTML = state.apartments.map(a => `
+  const el=document.getElementById('apt-list');
+  if(!state.apartments.length){el.innerHTML='';return;}
+  el.innerHTML=state.apartments.map(a=>`
     <div class="item-row">
-      <span class="item-name">🏠 ${a.name}${a.addr ? ` <span style="font-weight:400;font-size:12px;color:var(--text2)">· ${a.addr}</span>` : ''}</span>
-      <span class="badge badge-gray">${state.items.filter(i => i.aptId === a.id).length} articles</span>
+      <span class="item-name">🏠 ${a.name}${a.addr?` <span style="font-weight:400;font-size:12px;color:var(--text2)">· ${a.addr}</span>`:''}</span>
+      <span class="badge badge-gray">${state.items.filter(i=>i.aptId===a.id).length} articles</span>
       <button class="btn-icon btn-icon-edit" onclick="openAptModal('${a.id}')" title="Modifier">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
       </button>
     </div>`).join('');
 }
-
 function renderAptTabs(){
-  const sel = document.getElementById('item-apt');
-  sel.innerHTML = '<option value="">Appartement…</option>';
-  state.apartments.forEach(a => {
-    sel.innerHTML += `<option value="${a.id}">${a.name}</option>`;
-  });
+  const sel=document.getElementById('item-apt');
+  sel.innerHTML='<option value="">Appartement…</option>';
+  state.apartments.forEach(a=>{sel.innerHTML+=`<option value="${a.id}">${a.name}</option>`;});
 
-  const tabs = document.getElementById('apt-tabs');
-  tabs.innerHTML = `<button class="apt-tab ${activeApt==='all'?'active':''}" onclick="setAptFilter('all',this)">Tous</button>`;
-  state.apartments.forEach(a => {
-    tabs.innerHTML += `<button class="apt-tab ${activeApt===a.id?'active':''}" onclick="setAptFilter('${a.id}',this)">${a.name}</button>`;
+  const tabs=document.getElementById('apt-tabs');
+  tabs.innerHTML=`<button class="apt-tab ${activeApt==='all'?'active':''}" onclick="setAptFilter('all',this)">Tous</button>`;
+  state.apartments.forEach(a=>{
+    tabs.innerHTML+=`<button class="apt-tab ${activeApt===a.id?'active':''}" onclick="setAptFilter('${a.id}',this)">${a.name}</button>`;
   });
 }
-
-function setAptFilter(id, btn){
-  activeApt = id;
-  document.querySelectorAll('.apt-tab').forEach(b => b.classList.remove('active'));
+function setAptFilter(id,btn){
+  activeApt=id;
+  document.querySelectorAll('.apt-tab').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
   renderStockList();
 }
 
 // ── STOCK ─────────────────────────────────────────────────────
 function addItem(){
-  const name = document.getElementById('item-name').value.trim();
-  const qty = parseFloat(document.getElementById('item-qty').value);
-  const unit = document.getElementById('item-unit').value.trim() || 'unité';
-  const cat = document.getElementById('item-cat').value.trim() || 'Général';
-  const aptId = document.getElementById('item-apt').value;
-  if (!name || isNaN(qty)) return;
-
-  state.items.push({id: Date.now().toString(), name, qty, unit, cat, aptId});
-  save();
-  document.getElementById('item-name').value = '';
-  document.getElementById('item-qty').value = '1';
-  document.getElementById('item-unit').value = '';
+  const name=document.getElementById('item-name').value.trim();
+  const qty=parseFloat(document.getElementById('item-qty').value);
+  const unit=document.getElementById('item-unit').value.trim()||'unité';
+  const cat=document.getElementById('item-cat').value.trim()||'Général';
+  const aptId=document.getElementById('item-apt').value;
+  if(!name||isNaN(qty)) return;
+  const item={id:Date.now().toString(),name,qty,unit,cat,aptId};
+  fbSet('items',item.id,item);
+  document.getElementById('item-name').value='';
+  document.getElementById('item-qty').value='1';
+  document.getElementById('item-unit').value='';
 }
-
-function updateQty(id, d){
-  const it = state.items.find(x => x.id === id);
-  if (it){
-    it.qty = Math.max(0, it.qty + d);
-    save();
-  }
-}
-
+// Transaction atomique : évite que deux +1 simultanés donnent +1 au lieu de +2
+function updateQty(id,d){ fbQtyTransaction(id,d); }
 function removeItem(id){
-  state.items = state.items.filter(x => x.id !== id);
-  state.recipes.forEach(r => {
-    r.ings = r.ings.filter(i => i.id !== id);
+  // Dissocie des recettes avant suppression
+  state.recipes.forEach(r=>{
+    const before=r.ings.length;
+    r.ings=r.ings.filter(i=>i.id!==id);
+    if(r.ings.length!==before) fbSet('recipes',r.id,r);
   });
-  save();
+  fbDel('items',id);
 }
 
 function renderStock(){
-  document.getElementById('stat-items').textContent = state.items.length;
-  document.getElementById('stat-apts').textContent = state.apartments.length;
-  document.getElementById('stat-low').textContent = state.items.filter(i => i.qty > 0 && i.qty <= 2).length;
-  document.getElementById('stat-empty').textContent = state.items.filter(i => i.qty === 0).length;
-  
-  renderAptList();
-  renderAptTabs();
-  renderStockList();
+  const visible=activeApt==='all'?state.items:state.items.filter(i=>i.aptId===activeApt);
+  document.getElementById('stat-items').textContent=state.items.length;
+  document.getElementById('stat-apts').textContent=state.apartments.length;
+  document.getElementById('stat-low').textContent=state.items.filter(i=>i.qty>0&&i.qty<=2).length;
+  document.getElementById('stat-empty').textContent=state.items.filter(i=>i.qty===0).length;
+  renderAptList(); renderAptTabs(); renderStockList();
 }
-
 function renderStockList(){
-  const visible = activeApt === 'all' ? state.items : state.items.filter(i => i.aptId === activeApt);
-  const el = document.getElementById('stock-list');
-  
-  if (!visible.length){
-    el.innerHTML = '<div class="empty">Aucun article.</div>';
-    return;
-  }
-
-  const cats = [...new Set(visible.map(i => i.cat))];
-  let html = '';
-  
-  cats.forEach(cat => {
-    const items = visible.filter(i => i.cat === cat);
-    html += `<div class="card"><div class="card-title">${cat}</div>`;
-    
-    items.forEach(it => {
-      const apt = state.apartments.find(a => a.id === it.aptId);
-      const bd = it.qty === 0 ? 'badge-red' : it.qty <= 2 ? 'badge-amber' : 'badge-green';
-      const lb = it.qty === 0 ? 'épuisé' : it.qty <= 2 ? 'bas' : 'ok';
-      
-      html += `<div class="item-row">
-        <span class="item-name">${it.name}${apt ? ` <span style="font-size:11px;color:var(--text3)">· ${apt.name}</span>` : ''}</span>
+  const visible=activeApt==='all'?state.items:state.items.filter(i=>i.aptId===activeApt);
+  const el=document.getElementById('stock-list');
+  if(!visible.length){el.innerHTML='<div class="empty">Aucun article.</div>';return;}
+  const cats=[...new Set(visible.map(i=>i.cat))];
+  let html='';
+  cats.forEach(cat=>{
+    const items=visible.filter(i=>i.cat===cat);
+    html+=`<div class="card"><div class="card-title">${cat}</div>`;
+    items.forEach(it=>{
+      const apt=state.apartments.find(a=>a.id===it.aptId);
+      const bd=it.qty===0?'badge-red':it.qty<=2?'badge-amber':'badge-green';
+      const lb=it.qty===0?'épuisé':it.qty<=2?'bas':'ok';
+      html+=`<div class="item-row">
+        <span class="item-name">${it.name}${apt?` <span style="font-size:11px;color:var(--text3)">· ${apt.name}</span>`:''}</span>
         <span class="badge ${bd}">${lb}</span>
         <div class="qty-controls">
           <button class="qty-btn" onclick="updateQty('${it.id}',-1)">−</button>
@@ -644,297 +698,245 @@ function renderStockList(){
         </button>
       </div>`;
     });
-    html += `</div>`;
+    html+=`</div>`;
   });
-  
-  el.innerHTML = html;
+  el.innerHTML=html;
 }
 
 // ── FABRICATION ───────────────────────────────────────────────
 function addIngredient(){
-  const id = document.getElementById('ing-item').value;
-  const qty = parseFloat(document.getElementById('ing-qty').value);
-  if (!id || isNaN(qty) || qty <= 0) return;
-  
-  const item = state.items.find(x => x.id === id);
-  if (!item) return;
-  
-  const ex = currentRecipeIngs.find(x => x.id === id);
-  if (ex) ex.qty += qty;
-  else currentRecipeIngs.push({id, qty});
-  
+  const id=document.getElementById('ing-item').value;
+  const qty=parseFloat(document.getElementById('ing-qty').value);
+  if(!id||isNaN(qty)||qty<=0) return;
+  const item=state.items.find(x=>x.id===id); if(!item) return;
+  const ex=currentRecipeIngs.find(x=>x.id===id);
+  if(ex) ex.qty+=qty; else currentRecipeIngs.push({id,qty});
   renderIngTags();
 }
-
 function renderIngTags(){
-  document.getElementById('recipe-ings').innerHTML = currentRecipeIngs.map(ing => {
-    const item = state.items.find(x => x.id === ing.id);
-    return `<span class="ing-tag">${item ? item.name : '?'} × ${fmt(ing.qty)} <span class="rm" onclick="removeIng('${ing.id}')">✕</span></span>`;
+  document.getElementById('recipe-ings').innerHTML=currentRecipeIngs.map(ing=>{
+    const item=state.items.find(x=>x.id===ing.id);
+    return`<span class="ing-tag">${item?item.name:'?'} × ${fmt(ing.qty)} <span class="rm" onclick="removeIng('${ing.id}')">✕</span></span>`;
   }).join('');
 }
-
-function removeIng(id){
-  currentRecipeIngs = currentRecipeIngs.filter(x => x.id !== id);
-  renderIngTags();
-}
-
+function removeIng(id){currentRecipeIngs=currentRecipeIngs.filter(x=>x.id!==id);renderIngTags();}
 function addRecipe(){
-  const name = document.getElementById('recipe-name').value.trim();
-  if (!name) return;
-  state.recipes.push({id: Date.now().toString(), name, ings: [...currentRecipeIngs]});
-  currentRecipeIngs = [];
-  document.getElementById('recipe-name').value = '';
-  renderIngTags();
-  save();
+  const name=document.getElementById('recipe-name').value.trim(); if(!name) return;
+  const recipe={id:Date.now().toString(),name,ings:[...currentRecipeIngs]};
+  currentRecipeIngs=[];document.getElementById('recipe-name').value='';renderIngTags();
+  fbSet('recipes',recipe.id,recipe);
 }
-
-function removeRecipe(id){
-  state.recipes = state.recipes.filter(x => x.id !== id);
-  save();
-  renderFab();
-}
-
+function removeRecipe(id){ fbDel('recipes',id); renderFab(); }
 function renderFab(){
-  const sel = document.getElementById('ing-item');
-  sel.innerHTML = '<option value="">-- Sélectionner --</option>';
-  state.items.forEach(it => {
-    sel.innerHTML += `<option value="${it.id}">${it.name} (${fmt(it.qty)} ${it.unit})</option>`;
-  });
-
-  const el = document.getElementById('fab-list');
-  if (!state.recipes.length){
-    el.innerHTML = '<div class="empty">Aucune recette.</div>';
-    return;
-  }
-
-  let html = '';
-  state.recipes.forEach(r => {
-    const feasible = r.ings.every(ing => {
-      const item = state.items.find(x => x.id === ing.id);
-      return item && item.qty >= ing.qty;
-    });
-    
-    const maxBatch = r.ings.length === 0 ? '∞' : Math.floor(Math.min(...r.ings.map(ing => {
-      const item = state.items.find(x => x.id === ing.id);
-      return item ? item.qty / ing.qty : 0;
-    })));
-
-    const ingNames = r.ings.map(ing => {
-      const item = state.items.find(x => x.id === ing.id);
-      return item ? `${item.name} × ${fmt(ing.qty)}` : '?';
-    }).join(' · ');
-
-    html += `<div class="recipe-card ${feasible ? 'feasible' : 'not-feasible'}">
+  const sel=document.getElementById('ing-item');
+  sel.innerHTML='<option value="">-- Sélectionner --</option>';
+  state.items.forEach(it=>{sel.innerHTML+=`<option value="${it.id}">${it.name} (${fmt(it.qty)} ${it.unit})</option>`;});
+  const el=document.getElementById('fab-list');
+  if(!state.recipes.length){el.innerHTML='<div class="empty">Aucune recette.</div>';return;}
+  let html='';
+  state.recipes.forEach(r=>{
+    const feasible=r.ings.every(ing=>{const item=state.items.find(x=>x.id===ing.id);return item&&item.qty>=ing.qty;});
+    const maxBatch=r.ings.length===0?'∞':Math.floor(Math.min(...r.ings.map(ing=>{const item=state.items.find(x=>x.id===ing.id);return item?item.qty/ing.qty:0;})));
+    const ingNames=r.ings.map(ing=>{const item=state.items.find(x=>x.id===ing.id);return item?`${item.name} × ${fmt(ing.qty)}`:'?';}).join(' · ');
+    html+=`<div class="recipe-card ${feasible?'feasible':'not-feasible'}">
       <div class="recipe-header">
         <span class="recipe-name">${r.name}</span>
         <div style="display:flex;gap:8px;align-items:center">
-          <span class="badge ${feasible ? 'badge-green' : 'badge-red'}">${feasible ? '× ' + maxBatch + ' faisable' : 'manque stock'}</span>
+          <span class="badge ${feasible?'badge-green':'badge-red'}">${feasible?'× '+maxBatch+' faisable':'manque stock'}</span>
           <button class="btn-icon" onclick="removeRecipe('${r.id}')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button>
         </div>
       </div>
-      <div class="ing-text">${ingNames || 'Aucun ingrédient'}</div>
+      <div class="ing-text">${ingNames||'Aucun ingrédient'}</div>
     </div>`;
   });
-  el.innerHTML = html;
+  el.innerHTML=html;
 }
 
 // ── CONTACTS ─────────────────────────────────────────────────
-function getColor(name){
-  const i = (name || 'A').charCodeAt(0) % COLORS.length;
-  return COLORS[i];
-}
-
+function getColor(name){const i=(name||'A').charCodeAt(0)%COLORS.length;return COLORS[i];}
 function openContactModal(id){
-  editingContactId = id || null;
-  const c = id ? state.contacts.find(x => x.id === id) : null;
-  document.getElementById('cmodal-title').textContent = c ? 'Modifier' : 'Nouveau contact';
-  document.getElementById('c-name').value = c?.name || '';
-  document.getElementById('c-role').value = c?.role || '';
-  document.getElementById('c-email').value = c?.email || '';
-  document.getElementById('c-phone').value = c?.phone || '';
-  document.getElementById('c-notes').value = c?.notes || '';
-  document.getElementById('c-del-btn').style.display = c ? 'block' : 'none';
-  document.getElementById('contact-modal').style.display = 'flex';
+  editingContactId=id||null;
+  const c=id?state.contacts.find(x=>x.id===id):null;
+  document.getElementById('cmodal-title').textContent=c?'Modifier':'Nouveau contact';
+  document.getElementById('c-name').value=c?.name||'';document.getElementById('c-role').value=c?.role||'';
+  document.getElementById('c-email').value=c?.email||'';document.getElementById('c-phone').value=c?.phone||'';
+  document.getElementById('c-notes').value=c?.notes||'';
+  document.getElementById('c-del-btn').style.display=c?'block':'none';
+  document.getElementById('contact-modal').style.display='flex';
+  setTimeout(()=>document.getElementById('c-name').focus(),50);
 }
-
 function saveContact(){
-  const name = document.getElementById('c-name').value.trim();
-  if (!name) return;
-  const data = {
-    name,
-    role: document.getElementById('c-role').value.trim(),
-    email: document.getElementById('c-email').value.trim(),
-    phone: document.getElementById('c-phone').value.trim(),
-    notes: document.getElementById('c-notes').value.trim()
-  };
-  if (editingContactId){
-    const c = state.contacts.find(x => x.id === editingContactId);
-    if (c) Object.assign(c, data);
-  } else {
-    state.contacts.push({id: Date.now().toString(), ...data});
-  }
-  closeModal('contact-modal');
-  save();
+  const name=document.getElementById('c-name').value.trim(); if(!name) return;
+  const id=editingContactId||Date.now().toString();
+  const data={id,name,role:document.getElementById('c-role').value.trim(),email:document.getElementById('c-email').value.trim(),phone:document.getElementById('c-phone').value.trim(),notes:document.getElementById('c-notes').value.trim()};
+  closeModal('contact-modal'); fbSet('contacts',id,data);
 }
-
 function deleteContact(){
-  if (!editingContactId || !confirm('Supprimer ?')) return;
-  state.contacts = state.contacts.filter(x => x.id !== editingContactId);
-  closeModal('contact-modal');
-  save();
+  if(!editingContactId||!confirm('Supprimer ?')) return;
+  closeModal('contact-modal'); fbDel('contacts',editingContactId);
 }
-
 function renderContacts(){
-  const grid = document.getElementById('contact-grid');
-  const empty = document.getElementById('contact-empty');
-  
-  if (!state.contacts.length){
-    grid.innerHTML = '';
-    empty.style.display = 'block';
-    return;
-  }
-  
-  empty.style.display = 'none';
-  grid.innerHTML = state.contacts.map(c => {
-    const [bg, fg] = getColor(c.name);
-    const initials = (c.name || '?').split(' ').map(w => w[0]).join('').toUpperCase().slice(0,2);
-    return `<div class="contact-card" onclick="openContactModal('${c.id}')">
+  const grid=document.getElementById('contact-grid'),empty=document.getElementById('contact-empty');
+  if(!state.contacts.length){grid.innerHTML='';empty.style.display='block';return;}
+  empty.style.display='none';
+  grid.innerHTML=state.contacts.map(c=>{
+    const[bg,fg]=getColor(c.name);
+    const initials=(c.name||'?').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+    return`<div class="contact-card" onclick="openContactModal('${c.id}')">
       <div class="avatar" style="background:${bg};color:${fg}">${initials}</div>
       <div class="contact-name">${c.name}</div>
-      ${c.role ? `<div class="contact-role">${c.role}</div>` : ''}
-      ${c.email ? `<div class="contact-info"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>${c.email}</div>` : ''}
-      ${c.phone ? `<div class="contact-info"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13 19.79 19.79 0 0 1 1.61 4.38 2 2 0 0 1 3.58 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 9.91a16 16 0 0 0 6.06 6.06l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>${c.phone}</div>` : ''}
-      ${c.notes ? `<div class="contact-notes">${c.notes.slice(0,70)}${c.notes.length>70?'…':''}</div>` : ''}
+      ${c.role?`<div class="contact-role">${c.role}</div>`:''}
+      ${c.email?`<div class="contact-info"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>${c.email}</div>`:''}
+      ${c.phone?`<div class="contact-info"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13 19.79 19.79 0 0 1 1.61 4.38 2 2 0 0 1 3.58 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 9.91a16 16 0 0 0 6.06 6.06l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>${c.phone}</div>`:''}
+      ${c.notes?`<div class="contact-notes">${c.notes.slice(0,70)}${c.notes.length>70?'…':''}</div>`:''}
     </div>`;
   }).join('');
 }
 
+// ── PROJETS ──────────────────────────────────────────────────
+function setFilter(f,btn){projFilter=f;document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderProjects();}
+function openProjectModal(id){
+  editingProjectId=id||null;
+  const p=id?state.projects.find(x=>x.id===id):null;
+  currentOps=p?p.ops.map(o=>({...o})):[];
+  document.getElementById('pmodal-title').textContent=p?'Modifier':'Nouveau projet';
+  document.getElementById('p-name').value=p?.name||'';document.getElementById('p-desc').value=p?.desc||'';
+  document.getElementById('p-status').value=p?.status||'active';document.getElementById('p-date').value=p?.date||'';
+  document.getElementById('p-del-btn').style.display=p?'block':'none';
+  renderOpsTags();document.getElementById('project-modal').style.display='flex';
+  setTimeout(()=>document.getElementById('p-name').focus(),50);
+}
+function addOp(){const v=document.getElementById('new-op').value.trim();if(!v)return;currentOps.push({id:Date.now().toString(),name:v,done:false});document.getElementById('new-op').value='';renderOpsTags();}
+function toggleOpModal(id){const o=currentOps.find(x=>x.id===id);if(o)o.done=!o.done;renderOpsTags();}
+function removeOpModal(id){currentOps=currentOps.filter(x=>x.id!==id);renderOpsTags();}
+function renderOpsTags(){
+  document.getElementById('ops-tags').innerHTML=currentOps.map(o=>
+    `<span class="ing-tag" style="${o.done?'opacity:.5;text-decoration:line-through':''}">
+      <span onclick="toggleOpModal('${o.id}')" style="cursor:pointer">${o.done?'☑':'☐'}</span> ${o.name}
+      <span class="rm" onclick="removeOpModal('${o.id}')">✕</span>
+    </span>`).join('');
+}
+function saveProject(){
+  const name=document.getElementById('p-name').value.trim(); if(!name) return;
+  const id=editingProjectId||Date.now().toString();
+  const data={id,name,desc:document.getElementById('p-desc').value.trim(),status:document.getElementById('p-status').value,date:document.getElementById('p-date').value,ops:[...currentOps]};
+  closeModal('project-modal'); fbSet('projects',id,data);
+}
+function deleteProject(){
+  if(!editingProjectId||!confirm('Supprimer ?')) return;
+  closeModal('project-modal'); fbDel('projects',editingProjectId);
+}
+function toggleOp(pid,oid){
+  const p=state.projects.find(x=>x.id===pid); if(!p) return;
+  const o=p.ops.find(x=>x.id===oid); if(!o) return;
+  o.done=!o.done; fbSet('projects',pid,p);
+}
+function renderProjects(){
+  const filtered=state.projects.filter(p=>projFilter==='all'||p.status===projFilter);
+  document.getElementById('pstat-total').textContent=state.projects.length;
+  document.getElementById('pstat-active').textContent=state.projects.filter(p=>p.status==='active').length;
+  document.getElementById('pstat-done').textContent=state.projects.filter(p=>p.status==='done').length;
+  document.getElementById('pstat-ops').textContent=state.projects.reduce((s,p)=>s+p.ops.length,0);
+  const el=document.getElementById('project-list'),empty=document.getElementById('proj-empty');
+  if(!filtered.length){el.innerHTML='';empty.style.display='block';return;}
+  empty.style.display='none';
+  let html='';
+  filtered.forEach(p=>{
+    const doneOps=p.ops.filter(o=>o.done).length,totalOps=p.ops.length;
+    const pct=totalOps?Math.round(doneOps/totalOps*100):p.status==='done'?100:0;
+    const dateStr=p.date?`<span class="date-badge">📅 ${new Date(p.date+'T12:00:00').toLocaleDateString('fr-FR')}</span>`:'';
+    html+=`<div class="project-card status-${p.status}">
+      <div class="project-header">
+        <div>
+          <div class="project-name"><span class="dot ${SD[p.status]}" style="margin-right:6px"></span>${p.name}</div>
+          <div class="project-meta"><span class="badge ${SB[p.status]}">${SL[p.status]}</span>${dateStr}${totalOps?`<span style="font-size:11px;color:var(--text2)">${doneOps}/${totalOps} op. · ${pct}%</span>`:''}</div>
+        </div>
+        <button class="btn-icon btn-icon-edit" onclick="openProjectModal('${p.id}')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+      </div>
+      ${p.desc?`<div class="project-desc">${p.desc}</div>`:''}
+      ${totalOps?`<div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+        <div class="ops-list">${p.ops.map(o=>`<div class="op-row"><input type="checkbox" class="op-check" ${o.done?'checked':''} onchange="toggleOp('${p.id}','${o.id}')"/><span class="op-name ${o.done?'done':''}">${o.name}</span></div>`).join('')}</div>`:''}
+    </div>`;
+  });
+  el.innerHTML=html;
+}
+
 // ── HAUTE CRIMINALITÉ ─────────────────────────────────────────
-function hexToRgb(hex){
-  const r = parseInt(hex.slice(1,3),16);
-  const g = parseInt(hex.slice(3,5),16);
-  const b = parseInt(hex.slice(5,7),16);
-  return `${r},${g},${b}`;
-}
-
+function hexToRgb(hex){const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);return`${r},${g},${b}`;}
 function addHCGroup(){
-  const name = document.getElementById('hc-group-name').value.trim();
-  if (!name) return;
-  const color = document.getElementById('hc-group-color').value;
-  state.hcGroups.push({id: Date.now().toString(), name, color, products: []});
-  document.getElementById('hc-group-name').value = '';
-  save();
+  const name=document.getElementById('hc-group-name').value.trim(); if(!name) return;
+  const color=document.getElementById('hc-group-color').value;
+  const g={id:Date.now().toString(),name,color,products:[]};
+  document.getElementById('hc-group-name').value='';
+  fbSetHCGroup(g);
 }
-
 function openHCGroupModal(id){
-  editingHCGroupId = id;
-  const g = state.hcGroups.find(x => x.id === id);
-  if (!g) return;
-  document.getElementById('hcg-name').value = g.name;
-  document.getElementById('hcg-color').value = g.color || '#E24B4A';
-  document.getElementById('hc-group-modal').style.display = 'flex';
+  editingHCGroupId=id;
+  const g=state.hcGroups.find(x=>x.id===id); if(!g) return;
+  document.getElementById('hcg-name').value=g.name;
+  document.getElementById('hcg-color').value=g.color||'#E24B4A';
+  document.getElementById('hc-group-modal').style.display='flex';
 }
-
+function openHCProductModal(groupId,productId){
+  editingHCGroupId=groupId; editingHCProductId=productId;
+  const g=state.hcGroups.find(x=>x.id===groupId); if(!g) return;
+  const p=g.products.find(x=>x.id===productId); if(!p) return;
+  document.getElementById('hcp-title').textContent='Modifier le produit';
+  document.getElementById('hcp-name').value=p.name;
+  document.getElementById('hcp-price').value=p.price;
+  document.getElementById('hcp-unit').value=p.unit||'';
+  document.getElementById('hcp-del-btn').style.display='block';
+  document.getElementById('hc-product-modal').style.display='flex';
+}
 function saveHCGroup(){
-  const g = state.hcGroups.find(x => x.id === editingHCGroupId);
-  if (!g) return;
-  const name = document.getElementById('hcg-name').value.trim();
-  if (!name) return;
-  g.name = name;
-  g.color = document.getElementById('hcg-color').value;
-  closeModal('hc-group-modal');
-  save();
+  const g=state.hcGroups.find(x=>x.id===editingHCGroupId); if(!g) return;
+  const name=document.getElementById('hcg-name').value.trim(); if(!name) return;
+  g.name=name; g.color=document.getElementById('hcg-color').value;
+  closeModal('hc-group-modal'); fbSetHCGroup(g);
 }
-
 function deleteHCGroup(){
-  if (!confirm('Supprimer ce groupe et tous ses produits ?')) return;
-  state.hcGroups = state.hcGroups.filter(x => x.id !== editingHCGroupId);
-  closeModal('hc-group-modal');
-  save();
+  if(!confirm('Supprimer ce groupe et tous ses produits ?')) return;
+  closeModal('hc-group-modal'); fbDel('hcGroups',editingHCGroupId);
 }
-
 function addHCProduct(groupId){
-  const name = document.getElementById('hcp-new-name-' + groupId).value.trim();
-  const price = parseFloat(document.getElementById('hcp-new-price-' + groupId).value);
-  if (!name || isNaN(price)) return;
-  const unit = document.getElementById('hcp-new-unit-' + groupId).value.trim() || 'unité';
-  
-  const g = state.hcGroups.find(x => x.id === groupId);
-  if (!g) return;
-  
-  g.products.push({id: Date.now().toString(), name, price, unit});
-  document.getElementById('hcp-new-name-' + groupId).value = '';
-  document.getElementById('hcp-new-price-' + groupId).value = '';
-  document.getElementById('hcp-new-unit-' + groupId).value = '';
-  save();
+  const nameEl=document.getElementById('hcp-new-name-'+groupId);
+  const priceEl=document.getElementById('hcp-new-price-'+groupId);
+  const unitEl=document.getElementById('hcp-new-unit-'+groupId);
+  const name=nameEl.value.trim();
+  const price=parseFloat(priceEl.value);
+  if(!name||isNaN(price)) return;
+  const p={id:Date.now().toString(),name,price,unit:unitEl.value.trim()||'unité'};
+  nameEl.value='';priceEl.value='';unitEl.value='';
+  fbSetHCProduct(groupId,p);
 }
-
-function openHCProductModal(groupId, productId){
-  editingHCGroupId = groupId;
-  editingHCProductId = productId;
-  const g = state.hcGroups.find(x => x.id === groupId);
-  if (!g) return;
-  const p = g.products.find(x => x.id === productId);
-  if (!p) return;
-  
-  document.getElementById('hcp-title').textContent = 'Modifier le produit';
-  document.getElementById('hcp-name').value = p.name;
-  document.getElementById('hcp-price').value = p.price;
-  document.getElementById('hcp-unit').value = p.unit || '';
-  document.getElementById('hcp-del-btn').style.display = 'block';
-  document.getElementById('hc-product-modal').style.display = 'flex';
-}
-
 function saveHCProduct(){
-  const g = state.hcGroups.find(x => x.id === editingHCGroupId);
-  if (!g) return;
-  const p = g.products.find(x => x.id === editingHCProductId);
-  if (!p) return;
-  
-  const name = document.getElementById('hcp-name').value.trim();
-  const price = parseFloat(document.getElementById('hcp-price').value);
-  if (!name || isNaN(price)) return;
-  
-  p.name = name;
-  p.price = price;
-  p.unit = document.getElementById('hcp-unit').value.trim() || 'unité';
-  closeModal('hc-product-modal');
-  save();
+  const g=state.hcGroups.find(x=>x.id===editingHCGroupId); if(!g) return;
+  const p=g.products.find(x=>x.id===editingHCProductId); if(!p) return;
+  const name=document.getElementById('hcp-name').value.trim();
+  const price=parseFloat(document.getElementById('hcp-price').value);
+  if(!name||isNaN(price)) return;
+  p.name=name;p.price=price;p.unit=document.getElementById('hcp-unit').value.trim()||'unité';
+  closeModal('hc-product-modal'); fbSetHCProduct(editingHCGroupId,p);
 }
-
 function deleteHCProduct(){
-  if (!confirm('Supprimer ce produit ?')) return;
-  const g = state.hcGroups.find(x => x.id === editingHCGroupId);
-  if (!g) return;
-  g.products = g.products.filter(x => x.id !== editingHCProductId);
-  closeModal('hc-product-modal');
-  save();
+  if(!confirm('Supprimer ce produit ?')) return;
+  closeModal('hc-product-modal'); fbDelHCProduct(editingHCGroupId,editingHCProductId);
 }
-
 function renderHC(){
-  const allProducts = state.hcGroups.flatMap(g => g.products);
-  const prices = allProducts.map(p => p.price).filter(p => !isNaN(p));
-  
-  document.getElementById('hc-stat-groups').textContent = state.hcGroups.length;
-  document.getElementById('hc-stat-products').textContent = allProducts.length;
-  document.getElementById('hc-stat-min').textContent = prices.length ? money(Math.min(...prices)) : '–';
-  document.getElementById('hc-stat-max').textContent = prices.length ? money(Math.max(...prices)) : '–';
-
-  const el = document.getElementById('hc-grid');
-  const empty = document.getElementById('hc-empty');
-  
-  if (!state.hcGroups.length){
-    el.innerHTML = '';
-    empty.style.display = 'block';
-    return;
-  }
-  
-  empty.style.display = 'none';
-  el.innerHTML = state.hcGroups.map(g => {
-    const col = g.color || '#E24B4A';
-    const rgb = hexToRgb(col);
-    const products = g.products || [];
-    return `<div class="hc-group-card">
+  const allProducts=state.hcGroups.flatMap(g=>g.products);
+  const prices=allProducts.map(p=>p.price).filter(p=>!isNaN(p));
+  document.getElementById('hc-stat-groups').textContent=state.hcGroups.length;
+  document.getElementById('hc-stat-products').textContent=allProducts.length;
+  document.getElementById('hc-stat-min').textContent=prices.length?money(Math.min(...prices)):'–';
+  document.getElementById('hc-stat-max').textContent=prices.length?money(Math.max(...prices)):'–';
+  const el=document.getElementById('hc-grid'),empty=document.getElementById('hc-empty');
+  if(!state.hcGroups.length){el.innerHTML='';empty.style.display='block';return;}
+  empty.style.display='none';
+  el.innerHTML=state.hcGroups.map(g=>{
+    const col=g.color||'#E24B4A';
+    const rgb=hexToRgb(col);
+    const products=g.products||[];
+    return`<div class="hc-group-card">
       <div class="hc-group-header" style="background:rgba(${rgb},.1);border-bottom:2px solid ${col}">
         <span class="hc-group-name" style="color:${col}">${g.name}</span>
         <div style="display:flex;gap:6px;align-items:center">
@@ -943,13 +945,13 @@ function renderHC(){
         </div>
       </div>
       <div class="hc-group-body">
-        ${products.length ? products.map(p => `
+        ${products.length?products.map(p=>`
           <div class="hc-product-row">
             <span class="hc-product-name">${p.name}</span>
             <span class="hc-price">${money(p.price)}</span>
             <span style="font-size:11px;color:var(--text3);margin-left:2px">/${p.unit||'unité'}</span>
             <button class="btn-icon btn-icon-edit" onclick="openHCProductModal('${g.id}','${p.id}')" title="Modifier"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
-          </div>`).join('') : '<div style="font-size:12px;color:var(--text3);padding:8px 0">Aucun produit.</div>'}
+          </div>`).join(''):'<div style="font-size:12px;color:var(--text3);padding:8px 0">Aucun produit.</div>'}
         <div class="hc-add-product">
           <input type="text" id="hcp-new-name-${g.id}" placeholder="Produit…" style="font-size:12px;padding:5px 8px"/>
           <input type="number" id="hcp-new-price-${g.id}" placeholder="Prix $" min="0" step="any" style="font-size:12px;padding:5px 8px"/>
@@ -963,124 +965,87 @@ function renderHC(){
 
 // ── FINANCES ──────────────────────────────────────────────────
 function addTransaction(){
-  const type = document.getElementById('tx-type').value;
-  const label = document.getElementById('tx-label').value.trim();
-  const amount = parseFloat(document.getElementById('tx-amount').value);
-  const cat = document.getElementById('tx-cat').value.trim() || 'Général';
-  const date = document.getElementById('tx-date').value || new Date().toISOString().slice(0,10);
-  
-  if (!label || isNaN(amount) || amount <= 0) return;
-  
-  state.transactions.unshift({id: Date.now().toString(), type, label, amount, cat, date});
-  save();
-  document.getElementById('tx-label').value = '';
-  document.getElementById('tx-amount').value = '';
+  const type=document.getElementById('tx-type').value;
+  const label=document.getElementById('tx-label').value.trim();
+  const amount=parseFloat(document.getElementById('tx-amount').value);
+  const cat=document.getElementById('tx-cat').value.trim()||'Général';
+  const date=document.getElementById('tx-date').value||new Date().toISOString().slice(0,10);
+  if(!label||isNaN(amount)||amount<=0) return;
+  const tx={id:Date.now().toString(),type,label,amount,cat,date};
+  document.getElementById('tx-label').value='';
+  document.getElementById('tx-amount').value='';
+  fbSet('transactions',tx.id,tx);
 }
-
-function removeTransaction(id){
-  state.transactions = state.transactions.filter(x => x.id !== id);
-  save();
-  renderFinances();
+function removeTransaction(id){ fbDel('transactions',id); }
+function setFinFilter(f,btn){
+  finFilter=f;
+  document.querySelectorAll('.fin-filter-btn[data-cat]').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');renderFinances();
 }
-
-function setFinFilter(f, btn){
-  finFilter = f;
-  document.querySelectorAll('#fin-cat-filters .fin-filter-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  renderFinances();
+function setFinType(f,btn){
+  finTypeFilter=f;
+  document.querySelectorAll('.fin-filter-btn[data-type]').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');renderFinances();
 }
-
-function setFinType(f, btn){
-  finTypeFilter = f;
-  document.querySelectorAll('.fin-filter-btn').forEach(b => {
-    if (b.getAttribute('onclick').includes('setFinType')) b.classList.remove('active');
-  });
-  btn.classList.add('active');
-  renderFinances();
-}
-
-function setFinCat(f, btn){
-  finFilter = f;
-  document.querySelectorAll('#fin-cat-filters .fin-filter-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  renderFinances();
-}
-
 function renderFinances(){
-  const tx = state.transactions;
-  const revenus = tx.filter(t => t.type === 'revenu').reduce((s,t) => s + t.amount, 0);
-  const depenses = tx.filter(t => t.type === 'depense').reduce((s,t) => s + t.amount, 0);
-  const solde = revenus - depenses;
+  const tx=state.transactions;
+  const revenus=tx.filter(t=>t.type==='revenu').reduce((s,t)=>s+t.amount,0);
+  const depenses=tx.filter(t=>t.type==='depense').reduce((s,t)=>s+t.amount,0);
+  const solde=revenus-depenses;
+  document.getElementById('fin-stat-rev').textContent=money(revenus);
+  document.getElementById('fin-stat-dep').textContent=money(depenses);
+  const solEl=document.getElementById('fin-stat-sol');
+  solEl.textContent=money(Math.abs(solde));
+  solEl.style.color=solde>=0?'var(--green-text)':'var(--red-text)';
+  document.getElementById('fin-stat-nb').textContent=tx.length;
 
-  document.getElementById('fin-stat-rev').textContent = money(revenus);
-  document.getElementById('fin-stat-dep').textContent = money(depenses);
-  const solEl = document.getElementById('fin-stat-sol');
-  solEl.textContent = money(Math.abs(solde));
-  solEl.style.color = solde >= 0 ? 'var(--green-text)' : 'var(--red-text)';
-  document.getElementById('fin-stat-nb').textContent = tx.length;
+  // Filtres catégories
+  const cats=[...new Set(tx.map(t=>t.cat))];
+  const catBar=document.getElementById('fin-cat-filters');
+  const activeBtn=finFilter;
+  catBar.innerHTML=`<button class="fin-filter-btn ${finFilter==='all'?'active':''}" data-cat="all" onclick="setFinCat('all',this)">Toutes</button>`;
+  cats.forEach(c=>{ catBar.innerHTML+=`<button class="fin-filter-btn ${finFilter===c?'active':''}" data-cat="${c}" onclick="setFinCat('${c}',this)">${c}</button>`; });
 
-  // Catégories
-  const cats = [...new Set(tx.map(t => t.cat))];
-  const catBar = document.getElementById('fin-cat-filters');
-  catBar.innerHTML = `<button class="fin-filter-btn ${finFilter==='all'?'active':''}" data-cat="all" onclick="setFinCat('all',this)">Toutes</button>`;
-  cats.forEach(c => {
-    catBar.innerHTML += `<button class="fin-filter-btn ${finFilter===c?'active':''}" data-cat="${c}" onclick="setFinCat('${c}',this)">${c}</button>`;
-  });
+  let visible=tx;
+  if(finFilter!=='all') visible=visible.filter(t=>t.cat===finFilter);
+  if(finTypeFilter!=='all') visible=visible.filter(t=>t.type===finTypeFilter);
 
-  let visible = tx;
-  if (finFilter !== 'all') visible = visible.filter(t => t.cat === finFilter);
-  if (finTypeFilter !== 'all') visible = visible.filter(t => t.type === finTypeFilter);
-
-  const el = document.getElementById('tx-list');
-  if (!visible.length){
-    el.innerHTML = '<div class="empty">Aucune transaction.</div>';
-    return;
-  }
-
-  el.innerHTML = visible.map(t => {
-    const icon = t.type === 'revenu' ? '💰' : '💸';
-    const dateStr = t.date ? new Date(t.date + 'T12:00:00').toLocaleDateString('fr-FR', {day:'2-digit', month:'short', year:'numeric'}) : '';
-    return `<div class="tx-row">
+  const el=document.getElementById('tx-list');
+  if(!visible.length){el.innerHTML='<div class="empty">Aucune transaction.</div>';return;}
+  el.innerHTML=visible.map(t=>{
+    const icon=t.type==='revenu'?'💰':'💸';
+    const dateStr=t.date?new Date(t.date+'T12:00:00').toLocaleDateString('fr-FR',{day:'2-digit',month:'short',year:'numeric'}):'';
+    return`<div class="tx-row">
       <div class="tx-icon ${t.type}">${icon}</div>
       <div class="tx-info">
         <div class="tx-label">${t.label}</div>
-        <div class="tx-sub">${t.cat}${dateStr ? ' · ' + dateStr : ''}</div>
+        <div class="tx-sub">${t.cat}${dateStr?' · '+dateStr:''}</div>
       </div>
-      <div class="tx-amount ${t.type}">${t.type==='revenu' ? '+' : '−'}${money(t.amount)}</div>
+      <div class="tx-amount ${t.type}">${t.type==='revenu'?'+':'−'}${money(t.amount)}</div>
       <button class="btn-icon" onclick="removeTransaction('${t.id}')" title="Supprimer"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button>
     </div>`;
   }).join('');
 }
+function setFinCat(f,btn){
+  finFilter=f;
+  document.querySelectorAll('#fin-cat-filters .fin-filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');renderFinances();
+}
 
 // ── UTILS ─────────────────────────────────────────────────────
-function closeModal(id){
-  document.getElementById(id).style.display = 'none';
-}
-
-function closeModalIf(e, id){
-  if (e.target.id === id) closeModal(id);
-}
-
-function render(){
-  renderStock();
-  renderFab();
-  renderContacts();
-  renderHC();
-  renderFinances();
-}
-
-// ── KEYBOARD SHORTCUTS ───────────────────────────────────────
-document.addEventListener('keydown', e => {
-  if (e.key === 'Escape'){
-    ['contact-modal','apt-modal','hc-product-modal','hc-group-modal'].forEach(id => {
-      if (document.getElementById(id).style.display !== 'none') closeModal(id);
-    });
-  }
-  if (e.key === 'Enter' && e.target.id === 'item-name') addItem();
-  if (e.key === 'Enter' && e.target.id === 'apt-name') addApartment();
+function closeModal(id){document.getElementById(id).style.display='none';}
+function closeModalIf(e,id){if(e.target.id===id)closeModal(id);}
+function render(){renderStock();renderFab();renderContacts();renderProjects();renderHC();renderFinances();}
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape')['contact-modal','project-modal','apt-modal','hc-product-modal','hc-group-modal'].forEach(id=>{
+    if(document.getElementById(id).style.display!=='none')closeModal(id);
+  });
+  if(e.key==='Enter'&&e.target.id==='new-op') addOp();
+  if(e.key==='Enter'&&e.target.id==='item-name') addItem();
+  if(e.key==='Enter'&&e.target.id==='apt-name') addApartment();
 });
-
-// Init
-document.getElementById('tx-date').value = new Date().toISOString().slice(0,10);
-render();
+// Init date du jour pour les transactions
+document.getElementById('tx-date').value=new Date().toISOString().slice(0,10);
 </script>
+</body>
+</html>
