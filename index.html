@@ -215,9 +215,6 @@ input[type=color]{padding:2px 4px;width:36px;height:32px;cursor:pointer}
     <button class="tab" onclick="switchTab('contacts')">
       <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>Contacts
     </button>
-    <button class="tab" onclick="switchTab('projects')">
-      <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>Projets
-    </button>
     <button class="tab tab-hc" onclick="switchTab('hc')">
       <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>Haute Criminalité
     </button>
@@ -303,28 +300,6 @@ input[type=color]{padding:2px 4px;width:36px;height:32px;cursor:pointer}
   <div id="contact-empty" class="empty" style="display:none">Aucun contact.</div>
 </div>
 
-<!-- ═══ PROJETS ════════════════════════════════════════════════ -->
-<div class="section" id="sec-projects">
-  <div class="stats">
-    <div class="stat"><div class="stat-num" id="pstat-total">–</div><div class="stat-label">Projets</div></div>
-    <div class="stat"><div class="stat-num" id="pstat-active">–</div><div class="stat-label">En cours</div></div>
-    <div class="stat"><div class="stat-num" id="pstat-done">–</div><div class="stat-label">Terminés</div></div>
-    <div class="stat"><div class="stat-num" id="pstat-ops">–</div><div class="stat-label">Opérations</div></div>
-  </div>
-  <div class="top-bar">
-    <div class="filters">
-      <button class="filter-btn active" onclick="setFilter('all',this)">Tous</button>
-      <button class="filter-btn" onclick="setFilter('active',this)">En cours</button>
-      <button class="filter-btn" onclick="setFilter('waiting',this)">En attente</button>
-      <button class="filter-btn" onclick="setFilter('urgent',this)">Urgent</button>
-      <button class="filter-btn" onclick="setFilter('done',this)">Terminés</button>
-    </div>
-    <button class="btn btn-primary" onclick="openProjectModal()">+ Nouveau projet</button>
-  </div>
-  <div id="project-list"></div>
-  <div id="proj-empty" class="empty" style="display:none">Aucun projet.</div>
-</div>
-
 <!-- ═══ HAUTE CRIMINALITÉ ══════════════════════════════════════ -->
 <div class="section" id="sec-hc">
   <div class="stats">
@@ -399,39 +374,6 @@ input[type=color]{padding:2px 4px;width:36px;height:32px;cursor:pointer}
       <button id="c-del-btn" class="btn btn-danger left" onclick="deleteContact()" style="display:none">Supprimer</button>
       <button class="btn" onclick="closeModal('contact-modal')">Annuler</button>
       <button class="btn btn-primary" onclick="saveContact()">Enregistrer</button>
-    </div>
-  </div>
-</div>
-
-<!-- ── MODAL PROJET ── -->
-<div class="modal-overlay" id="project-modal" style="display:none" onclick="closeModalIf(event,'project-modal')">
-  <div class="modal">
-    <div class="modal-title" id="pmodal-title">Nouveau projet</div>
-    <div class="field"><label>Nom *</label><input type="text" id="p-name"/></div>
-    <div class="field"><label>Description</label><textarea id="p-desc" placeholder="Objectif, contexte…"></textarea></div>
-    <div class="field-row">
-      <div class="field"><label>Statut</label>
-        <select id="p-status">
-          <option value="active">En cours</option>
-          <option value="waiting">En attente</option>
-          <option value="urgent">Urgent</option>
-          <option value="done">Terminé</option>
-        </select>
-      </div>
-      <div class="field"><label>Date limite</label><input type="date" id="p-date"/></div>
-    </div>
-    <div class="field">
-      <label>Opérations</label>
-      <div id="ops-tags" style="margin-bottom:6px;min-height:22px"></div>
-      <div class="add-ing-row">
-        <input type="text" id="new-op" placeholder="Ajouter une opération…"/>
-        <button class="btn btn-sm" onclick="addOp()">+</button>
-      </div>
-    </div>
-    <div class="modal-actions">
-      <button id="p-del-btn" class="btn btn-danger left" onclick="deleteProject()" style="display:none">Supprimer</button>
-      <button class="btn" onclick="closeModal('project-modal')">Annuler</button>
-      <button class="btn btn-primary" onclick="saveProject()">Enregistrer</button>
     </div>
   </div>
 </div>
@@ -757,75 +699,6 @@ function renderContacts(){
       ${c.notes?`<div class="contact-notes">${c.notes.slice(0,70)}${c.notes.length>70?'…':''}</div>`:''}
     </div>`;
   }).join('');
-}
-
-// ── PROJETS ──────────────────────────────────────────────────
-function setFilter(f,btn){projFilter=f;document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderProjects();}
-function openProjectModal(id){
-  editingProjectId=id||null;
-  const p=id?state.projects.find(x=>x.id===id):null;
-  currentOps=p?p.ops.map(o=>({...o})):[];
-  document.getElementById('pmodal-title').textContent=p?'Modifier':'Nouveau projet';
-  document.getElementById('p-name').value=p?.name||'';document.getElementById('p-desc').value=p?.desc||'';
-  document.getElementById('p-status').value=p?.status||'active';document.getElementById('p-date').value=p?.date||'';
-  document.getElementById('p-del-btn').style.display=p?'block':'none';
-  renderOpsTags();document.getElementById('project-modal').style.display='flex';
-  setTimeout(()=>document.getElementById('p-name').focus(),50);
-}
-function addOp(){const v=document.getElementById('new-op').value.trim();if(!v)return;currentOps.push({id:Date.now().toString(),name:v,done:false});document.getElementById('new-op').value='';renderOpsTags();}
-function toggleOpModal(id){const o=currentOps.find(x=>x.id===id);if(o)o.done=!o.done;renderOpsTags();}
-function removeOpModal(id){currentOps=currentOps.filter(x=>x.id!==id);renderOpsTags();}
-function renderOpsTags(){
-  document.getElementById('ops-tags').innerHTML=currentOps.map(o=>
-    `<span class="ing-tag" style="${o.done?'opacity:.5;text-decoration:line-through':''}">
-      <span onclick="toggleOpModal('${o.id}')" style="cursor:pointer">${o.done?'☑':'☐'}</span> ${o.name}
-      <span class="rm" onclick="removeOpModal('${o.id}')">✕</span>
-    </span>`).join('');
-}
-function saveProject(){
-  const name=document.getElementById('p-name').value.trim(); if(!name) return;
-  const data={name,desc:document.getElementById('p-desc').value.trim(),status:document.getElementById('p-status').value,date:document.getElementById('p-date').value,ops:[...currentOps]};
-  if(editingProjectId){const p=state.projects.find(x=>x.id===editingProjectId);if(p)Object.assign(p,data);}
-  else state.projects.push({id:Date.now().toString(),...data});
-  closeModal('project-modal');save();
-}
-function deleteProject(){
-  if(!editingProjectId||!confirm('Supprimer ?')) return;
-  state.projects=state.projects.filter(x=>x.id!==editingProjectId);
-  closeModal('project-modal');save();
-}
-function toggleOp(pid,oid){
-  const p=state.projects.find(x=>x.id===pid); if(!p) return;
-  const o=p.ops.find(x=>x.id===oid); if(o) o.done=!o.done; save();
-}
-function renderProjects(){
-  const filtered=state.projects.filter(p=>projFilter==='all'||p.status===projFilter);
-  document.getElementById('pstat-total').textContent=state.projects.length;
-  document.getElementById('pstat-active').textContent=state.projects.filter(p=>p.status==='active').length;
-  document.getElementById('pstat-done').textContent=state.projects.filter(p=>p.status==='done').length;
-  document.getElementById('pstat-ops').textContent=state.projects.reduce((s,p)=>s+p.ops.length,0);
-  const el=document.getElementById('project-list'),empty=document.getElementById('proj-empty');
-  if(!filtered.length){el.innerHTML='';empty.style.display='block';return;}
-  empty.style.display='none';
-  let html='';
-  filtered.forEach(p=>{
-    const doneOps=p.ops.filter(o=>o.done).length,totalOps=p.ops.length;
-    const pct=totalOps?Math.round(doneOps/totalOps*100):p.status==='done'?100:0;
-    const dateStr=p.date?`<span class="date-badge">📅 ${new Date(p.date+'T12:00:00').toLocaleDateString('fr-FR')}</span>`:'';
-    html+=`<div class="project-card status-${p.status}">
-      <div class="project-header">
-        <div>
-          <div class="project-name"><span class="dot ${SD[p.status]}" style="margin-right:6px"></span>${p.name}</div>
-          <div class="project-meta"><span class="badge ${SB[p.status]}">${SL[p.status]}</span>${dateStr}${totalOps?`<span style="font-size:11px;color:var(--text2)">${doneOps}/${totalOps} op. · ${pct}%</span>`:''}</div>
-        </div>
-        <button class="btn-icon btn-icon-edit" onclick="openProjectModal('${p.id}')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
-      </div>
-      ${p.desc?`<div class="project-desc">${p.desc}</div>`:''}
-      ${totalOps?`<div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
-        <div class="ops-list">${p.ops.map(o=>`<div class="op-row"><input type="checkbox" class="op-check" ${o.done?'checked':''} onchange="toggleOp('${p.id}','${o.id}')"/><span class="op-name ${o.done?'done':''}">${o.name}</span></div>`).join('')}</div>`:''}
-    </div>`;
-  });
-  el.innerHTML=html;
 }
 
 // ── HAUTE CRIMINALITÉ ─────────────────────────────────────────
