@@ -120,32 +120,6 @@ input[type=color]{padding:2px 4px;width:36px;height:32px;cursor:pointer}
 .contact-info{font-size:12px;color:var(--text2);margin-bottom:2px;display:flex;gap:5px;align-items:center}
 .contact-notes{font-size:12px;color:var(--text2);font-style:italic;margin-top:6px;line-height:1.4}
 
-/* PROJECTS */
-.project-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:14px 18px;margin-bottom:12px;box-shadow:var(--shadow)}
-.project-card.status-urgent{border-left:3px solid var(--red)}
-.project-card.status-active{border-left:3px solid var(--green)}
-.project-card.status-waiting{border-left:3px solid var(--amber)}
-.project-card.status-done{border-left:3px solid var(--text3);opacity:.8}
-.project-header{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:6px}
-.project-name{font-weight:600;font-size:14px}
-.project-meta{display:flex;align-items:center;gap:8px;margin-top:3px;flex-wrap:wrap}
-.project-desc{font-size:13px;color:var(--text2);margin-bottom:10px;line-height:1.5}
-.progress-bar{height:4px;background:var(--bg2);border-radius:999px;overflow:hidden;margin:8px 0}
-.progress-fill{height:100%;background:var(--green);border-radius:999px;transition:width .4s}
-.ops-list{margin-top:6px}
-.op-row{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--bg2);font-size:13px}
-.op-row:last-child{border-bottom:none}
-.op-check{width:14px;height:14px;cursor:pointer;accent-color:var(--green);flex-shrink:0}
-.op-name{flex:1}.op-name.done{text-decoration:line-through;color:var(--text3)}
-.dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;display:inline-block}
-.dot-active{background:var(--green)}.dot-waiting{background:var(--amber)}.dot-urgent{background:var(--red)}.dot-done{background:var(--text3)}
-.filters{display:flex;gap:6px;flex-wrap:wrap}
-.filter-btn{padding:4px 11px;font-size:12px;border:1px solid var(--border);border-radius:999px;background:var(--card);cursor:pointer;color:var(--text2);font-family:'DM Sans',sans-serif;transition:all .15s}
-.filter-btn:hover{border-color:var(--green);color:var(--green)}
-.filter-btn.active{background:var(--green);color:white;border-color:var(--green)}
-.top-bar{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px}
-.date-badge{font-family:'DM Mono',monospace;font-size:11px;color:var(--text2)}
-
 /* HAUTE CRIMINALITE */
 .hc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
 .hc-group-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow)}
@@ -442,158 +416,224 @@ const app = firebase.initializeApp(firebaseConfig);
 const db  = firebase.database();
 const REF = db.ref('gestionnaire');
 
-const EMPTY_STATE = {items:[],apartments:[],recipes:[],contacts:[],projects:[],hcGroups:[],transactions:[]};
+const EMPTY_STATE = {items:[], apartments:[], recipes:[], contacts:[], hcGroups:[], transactions:[]};
 let state = JSON.parse(JSON.stringify(EMPTY_STATE));
-let currentRecipeIngs=[], currentOps=[];
-let editingContactId=null, editingProjectId=null;
-let editingAptId=null, editingHCGroupId=null, editingHCProductId=null, editingHCProductGroupId=null;
-let projFilter='all', activeApt='all', finFilter='all', finTypeFilter='all';
-let isRemote=false;
+let currentRecipeIngs = [];
+let editingContactId = null;
+let editingAptId = null;
+let editingHCGroupId = null;
+let editingHCProductId = null;
+let editingHCProductGroupId = null;
+let activeApt = 'all';
+let finFilter = 'all';
+let finTypeFilter = 'all';
+let isRemote = false;
 
-const COLORS=[['#E1F5EE','#0F6E56'],['#E6F1FB','#185FA5'],['#FAEEDA','#854F0B'],['#FBEAF0','#993556'],['#EAF3DE','#3B6D11'],['#FCEBEB','#A32D2D'],['#EEEDFE','#534AB7'],['#F1EFE8','#5F5E5A']];
-const SL={active:'En cours',waiting:'En attente',urgent:'Urgent',done:'Terminé'};
-const SB={active:'badge-green',waiting:'badge-amber',urgent:'badge-red',done:'badge-gray'};
-const SD={active:'dot-active',waiting:'dot-waiting',urgent:'dot-urgent',done:'dot-done'};
+const COLORS = [['#E1F5EE','#0F6E56'],['#E6F1FB','#185FA5'],['#FAEEDA','#854F0B'],['#FBEAF0','#993556'],['#EAF3DE','#3B6D11'],['#FCEBEB','#A32D2D'],['#EEEDFE','#534AB7'],['#F1EFE8','#5F5E5A']];
 
 // ── FIREBASE ──────────────────────────────────────────────────
-function setSync(s,msg){
-  const d=document.getElementById('sync-dot'),l=document.getElementById('sync-label');
-  d.className='sync-dot '+s; l.textContent=msg;
-  l.style.color=s==='connected'?'var(--green-text)':s==='error'?'var(--red-text)':'';
+function setSync(s, msg){
+  const d = document.getElementById('sync-dot');
+  const l = document.getElementById('sync-label');
+  d.className = 'sync-dot ' + s;
+  l.textContent = msg;
+  l.style.color = s === 'connected' ? 'var(--green-text)' : s === 'error' ? 'var(--red-text)' : '';
 }
-REF.on('value',snap=>{
-  const data=snap.val();
-  isRemote=true;
-  state=Object.assign(JSON.parse(JSON.stringify(EMPTY_STATE)),data||{});
-  ['items','apartments','recipes','contacts','projects','hcGroups','transactions'].forEach(k=>{
-    if(state[k]&&!Array.isArray(state[k])) state[k]=Object.values(state[k]);
-    else if(!state[k]) state[k]=[];
+
+REF.on('value', snap => {
+  const data = snap.val();
+  isRemote = true;
+  state = Object.assign(JSON.parse(JSON.stringify(EMPTY_STATE)), data || {});
+  
+  ['items','apartments','recipes','contacts','hcGroups','transactions'].forEach(k => {
+    if (state[k] && !Array.isArray(state[k])) state[k] = Object.values(state[k]);
+    else if (!state[k]) state[k] = [];
   });
-  state.hcGroups.forEach(g=>{
-    if(g.products&&!Array.isArray(g.products)) g.products=Object.values(g.products);
-    else if(!g.products) g.products=[];
+
+  state.hcGroups.forEach(g => {
+    if (g.products && !Array.isArray(g.products)) g.products = Object.values(g.products);
+    else if (!g.products) g.products = [];
   });
+
   render();
-  setSync('connected','● Connecté — synchronisé');
-  const now=new Date();
-  document.getElementById('sync-time').textContent='Sync '+now.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
-  isRemote=false;
-},()=>setSync('error','✕ Erreur de connexion'));
-db.ref('.info/connected').on('value',s=>{if(!s.val())setSync('connecting','Reconnexion…');});
-function save(){if(!isRemote) REF.set(state).catch(()=>setSync('error','✕ Sauvegarde échouée'));}
+  setSync('connected', '● Connecté — synchronisé');
+  const now = new Date();
+  document.getElementById('sync-time').textContent = 'Sync ' + now.toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+  isRemote = false;
+}, () => setSync('error', '✕ Erreur de connexion'));
+
+db.ref('.info/connected').on('value', s => {
+  if (!s.val()) setSync('connecting', 'Reconnexion…');
+});
+
+function save(){
+  if (!isRemote) REF.set(state).catch(() => setSync('error', '✕ Sauvegarde échouée'));
+}
 
 // ── TABS ──────────────────────────────────────────────────────
 function switchTab(t){
-  const names=['stock','fab','contacts','projects','hc','finances'];
-  document.querySelectorAll('.tab').forEach((el,i)=>el.classList.toggle('active',names[i]===t));
-  document.querySelectorAll('.section').forEach(el=>el.classList.remove('active'));
-  document.getElementById('sec-'+t).classList.add('active');
-  if(t==='fab') renderFab();
-  if(t==='projects') renderProjects();
-  if(t==='hc') renderHC();
-  if(t==='finances') renderFinances();
+  const names = ['stock','fab','contacts','hc','finances'];
+  document.querySelectorAll('.tab').forEach((el, i) => {
+    el.classList.toggle('active', names[i] === t);
+  });
+  
+  document.querySelectorAll('.section').forEach(el => el.classList.remove('active'));
+  document.getElementById('sec-' + t).classList.add('active');
+
+  if (t === 'fab') renderFab();
+  if (t === 'hc') renderHC();
+  if (t === 'finances') renderFinances();
 }
-function fmt(n){return n===undefined||n===null?0:n%1===0?n:parseFloat(n.toFixed(2));}
-function money(n){return fmt(n).toLocaleString('fr-FR')+'$';}
+
+function fmt(n){
+  return n === undefined || n === null ? 0 : n % 1 === 0 ? n : parseFloat(n.toFixed(2));
+}
+
+function money(n){
+  return fmt(n).toLocaleString('fr-FR') + '$';
+}
 
 // ── APPARTEMENTS ─────────────────────────────────────────────
 function addApartment(){
-  const name=document.getElementById('apt-name').value.trim(); if(!name) return;
-  const addr=document.getElementById('apt-addr').value.trim();
-  state.apartments.push({id:Date.now().toString(),name,addr});
+  const name = document.getElementById('apt-name').value.trim();
+  if (!name) return;
+  const addr = document.getElementById('apt-addr').value.trim();
+  state.apartments.push({id: Date.now().toString(), name, addr});
   save();
-  document.getElementById('apt-name').value='';
-  document.getElementById('apt-addr').value='';
+  document.getElementById('apt-name').value = '';
+  document.getElementById('apt-addr').value = '';
 }
+
 function openAptModal(id){
-  editingAptId=id;
-  const a=state.apartments.find(x=>x.id===id); if(!a) return;
-  document.getElementById('apt-edit-name').value=a.name;
-  document.getElementById('apt-edit-addr').value=a.addr||'';
-  document.getElementById('apt-modal').style.display='flex';
+  editingAptId = id;
+  const a = state.apartments.find(x => x.id === id);
+  if (!a) return;
+  document.getElementById('apt-edit-name').value = a.name;
+  document.getElementById('apt-edit-addr').value = a.addr || '';
+  document.getElementById('apt-modal').style.display = 'flex';
 }
+
 function saveApartment(){
-  const a=state.apartments.find(x=>x.id===editingAptId); if(!a) return;
-  const name=document.getElementById('apt-edit-name').value.trim(); if(!name) return;
-  a.name=name; a.addr=document.getElementById('apt-edit-addr').value.trim();
-  closeModal('apt-modal'); save();
+  const a = state.apartments.find(x => x.id === editingAptId);
+  if (!a) return;
+  const name = document.getElementById('apt-edit-name').value.trim();
+  if (!name) return;
+  a.name = name;
+  a.addr = document.getElementById('apt-edit-addr').value.trim();
+  closeModal('apt-modal');
+  save();
 }
+
 function deleteApartment(){
-  if(!confirm('Supprimer cet appartement ? Les articles liés seront dissociés.')) return;
-  state.apartments=state.apartments.filter(x=>x.id!==editingAptId);
-  state.items.forEach(it=>{if(it.aptId===editingAptId) it.aptId='';});
-  closeModal('apt-modal'); save();
+  if (!confirm('Supprimer cet appartement ? Les articles liés seront dissociés.')) return;
+  state.apartments = state.apartments.filter(x => x.id !== editingAptId);
+  state.items.forEach(it => {
+    if (it.aptId === editingAptId) it.aptId = '';
+  });
+  closeModal('apt-modal');
+  save();
 }
+
 function renderAptList(){
-  const el=document.getElementById('apt-list');
-  if(!state.apartments.length){el.innerHTML='';return;}
-  el.innerHTML=state.apartments.map(a=>`
+  const el = document.getElementById('apt-list');
+  if (!state.apartments.length){ el.innerHTML = ''; return; }
+  el.innerHTML = state.apartments.map(a => `
     <div class="item-row">
-      <span class="item-name">🏠 ${a.name}${a.addr?` <span style="font-weight:400;font-size:12px;color:var(--text2)">· ${a.addr}</span>`:''}</span>
-      <span class="badge badge-gray">${state.items.filter(i=>i.aptId===a.id).length} articles</span>
+      <span class="item-name">🏠 ${a.name}${a.addr ? ` <span style="font-weight:400;font-size:12px;color:var(--text2)">· ${a.addr}</span>` : ''}</span>
+      <span class="badge badge-gray">${state.items.filter(i => i.aptId === a.id).length} articles</span>
       <button class="btn-icon btn-icon-edit" onclick="openAptModal('${a.id}')" title="Modifier">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
       </button>
     </div>`).join('');
 }
-function renderAptTabs(){
-  const sel=document.getElementById('item-apt');
-  sel.innerHTML='<option value="">Appartement…</option>';
-  state.apartments.forEach(a=>{sel.innerHTML+=`<option value="${a.id}">${a.name}</option>`;});
 
-  const tabs=document.getElementById('apt-tabs');
-  tabs.innerHTML=`<button class="apt-tab ${activeApt==='all'?'active':''}" onclick="setAptFilter('all',this)">Tous</button>`;
-  state.apartments.forEach(a=>{
-    tabs.innerHTML+=`<button class="apt-tab ${activeApt===a.id?'active':''}" onclick="setAptFilter('${a.id}',this)">${a.name}</button>`;
+function renderAptTabs(){
+  const sel = document.getElementById('item-apt');
+  sel.innerHTML = '<option value="">Appartement…</option>';
+  state.apartments.forEach(a => {
+    sel.innerHTML += `<option value="${a.id}">${a.name}</option>`;
+  });
+
+  const tabs = document.getElementById('apt-tabs');
+  tabs.innerHTML = `<button class="apt-tab ${activeApt==='all'?'active':''}" onclick="setAptFilter('all',this)">Tous</button>`;
+  state.apartments.forEach(a => {
+    tabs.innerHTML += `<button class="apt-tab ${activeApt===a.id?'active':''}" onclick="setAptFilter('${a.id}',this)">${a.name}</button>`;
   });
 }
-function setAptFilter(id,btn){
-  activeApt=id;
-  document.querySelectorAll('.apt-tab').forEach(b=>b.classList.remove('active'));
+
+function setAptFilter(id, btn){
+  activeApt = id;
+  document.querySelectorAll('.apt-tab').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   renderStockList();
 }
 
 // ── STOCK ─────────────────────────────────────────────────────
 function addItem(){
-  const name=document.getElementById('item-name').value.trim();
-  const qty=parseFloat(document.getElementById('item-qty').value);
-  const unit=document.getElementById('item-unit').value.trim()||'unité';
-  const cat=document.getElementById('item-cat').value.trim()||'Général';
-  const aptId=document.getElementById('item-apt').value;
-  if(!name||isNaN(qty)) return;
-  state.items.push({id:Date.now().toString(),name,qty,unit,cat,aptId});
+  const name = document.getElementById('item-name').value.trim();
+  const qty = parseFloat(document.getElementById('item-qty').value);
+  const unit = document.getElementById('item-unit').value.trim() || 'unité';
+  const cat = document.getElementById('item-cat').value.trim() || 'Général';
+  const aptId = document.getElementById('item-apt').value;
+  if (!name || isNaN(qty)) return;
+
+  state.items.push({id: Date.now().toString(), name, qty, unit, cat, aptId});
   save();
-  document.getElementById('item-name').value='';
-  document.getElementById('item-qty').value='1';
-  document.getElementById('item-unit').value='';
+  document.getElementById('item-name').value = '';
+  document.getElementById('item-qty').value = '1';
+  document.getElementById('item-unit').value = '';
 }
-function updateQty(id,d){const it=state.items.find(x=>x.id===id);if(it){it.qty=Math.max(0,it.qty+d);save();}}
-function removeItem(id){state.items=state.items.filter(x=>x.id!==id);state.recipes.forEach(r=>{r.ings=r.ings.filter(i=>i.id!==id)});save();}
+
+function updateQty(id, d){
+  const it = state.items.find(x => x.id === id);
+  if (it){
+    it.qty = Math.max(0, it.qty + d);
+    save();
+  }
+}
+
+function removeItem(id){
+  state.items = state.items.filter(x => x.id !== id);
+  state.recipes.forEach(r => {
+    r.ings = r.ings.filter(i => i.id !== id);
+  });
+  save();
+}
 
 function renderStock(){
-  const visible=activeApt==='all'?state.items:state.items.filter(i=>i.aptId===activeApt);
-  document.getElementById('stat-items').textContent=state.items.length;
-  document.getElementById('stat-apts').textContent=state.apartments.length;
-  document.getElementById('stat-low').textContent=state.items.filter(i=>i.qty>0&&i.qty<=2).length;
-  document.getElementById('stat-empty').textContent=state.items.filter(i=>i.qty===0).length;
-  renderAptList(); renderAptTabs(); renderStockList();
+  document.getElementById('stat-items').textContent = state.items.length;
+  document.getElementById('stat-apts').textContent = state.apartments.length;
+  document.getElementById('stat-low').textContent = state.items.filter(i => i.qty > 0 && i.qty <= 2).length;
+  document.getElementById('stat-empty').textContent = state.items.filter(i => i.qty === 0).length;
+  
+  renderAptList();
+  renderAptTabs();
+  renderStockList();
 }
+
 function renderStockList(){
-  const visible=activeApt==='all'?state.items:state.items.filter(i=>i.aptId===activeApt);
-  const el=document.getElementById('stock-list');
-  if(!visible.length){el.innerHTML='<div class="empty">Aucun article.</div>';return;}
-  const cats=[...new Set(visible.map(i=>i.cat))];
-  let html='';
-  cats.forEach(cat=>{
-    const items=visible.filter(i=>i.cat===cat);
-    html+=`<div class="card"><div class="card-title">${cat}</div>`;
-    items.forEach(it=>{
-      const apt=state.apartments.find(a=>a.id===it.aptId);
-      const bd=it.qty===0?'badge-red':it.qty<=2?'badge-amber':'badge-green';
-      const lb=it.qty===0?'épuisé':it.qty<=2?'bas':'ok';
-      html+=`<div class="item-row">
-        <span class="item-name">${it.name}${apt?` <span style="font-size:11px;color:var(--text3)">· ${apt.name}</span>`:''}</span>
+  const visible = activeApt === 'all' ? state.items : state.items.filter(i => i.aptId === activeApt);
+  const el = document.getElementById('stock-list');
+  
+  if (!visible.length){
+    el.innerHTML = '<div class="empty">Aucun article.</div>';
+    return;
+  }
+
+  const cats = [...new Set(visible.map(i => i.cat))];
+  let html = '';
+  
+  cats.forEach(cat => {
+    const items = visible.filter(i => i.cat === cat);
+    html += `<div class="card"><div class="card-title">${cat}</div>`;
+    
+    items.forEach(it => {
+      const apt = state.apartments.find(a => a.id === it.aptId);
+      const bd = it.qty === 0 ? 'badge-red' : it.qty <= 2 ? 'badge-amber' : 'badge-green';
+      const lb = it.qty === 0 ? 'épuisé' : it.qty <= 2 ? 'bas' : 'ok';
+      
+      html += `<div class="item-row">
+        <span class="item-name">${it.name}${apt ? ` <span style="font-size:11px;color:var(--text3)">· ${apt.name}</span>` : ''}</span>
         <span class="badge ${bd}">${lb}</span>
         <div class="qty-controls">
           <button class="qty-btn" onclick="updateQty('${it.id}',-1)">−</button>
@@ -605,183 +645,297 @@ function renderStockList(){
         </button>
       </div>`;
     });
-    html+=`</div>`;
+    html += `</div>`;
   });
-  el.innerHTML=html;
+  
+  el.innerHTML = html;
 }
 
 // ── FABRICATION ───────────────────────────────────────────────
 function addIngredient(){
-  const id=document.getElementById('ing-item').value;
-  const qty=parseFloat(document.getElementById('ing-qty').value);
-  if(!id||isNaN(qty)||qty<=0) return;
-  const item=state.items.find(x=>x.id===id); if(!item) return;
-  const ex=currentRecipeIngs.find(x=>x.id===id);
-  if(ex) ex.qty+=qty; else currentRecipeIngs.push({id,qty});
+  const id = document.getElementById('ing-item').value;
+  const qty = parseFloat(document.getElementById('ing-qty').value);
+  if (!id || isNaN(qty) || qty <= 0) return;
+  
+  const item = state.items.find(x => x.id === id);
+  if (!item) return;
+  
+  const ex = currentRecipeIngs.find(x => x.id === id);
+  if (ex) ex.qty += qty;
+  else currentRecipeIngs.push({id, qty});
+  
   renderIngTags();
 }
+
 function renderIngTags(){
-  document.getElementById('recipe-ings').innerHTML=currentRecipeIngs.map(ing=>{
-    const item=state.items.find(x=>x.id===ing.id);
-    return`<span class="ing-tag">${item?item.name:'?'} × ${fmt(ing.qty)} <span class="rm" onclick="removeIng('${ing.id}')">✕</span></span>`;
+  document.getElementById('recipe-ings').innerHTML = currentRecipeIngs.map(ing => {
+    const item = state.items.find(x => x.id === ing.id);
+    return `<span class="ing-tag">${item ? item.name : '?'} × ${fmt(ing.qty)} <span class="rm" onclick="removeIng('${ing.id}')">✕</span></span>`;
   }).join('');
 }
-function removeIng(id){currentRecipeIngs=currentRecipeIngs.filter(x=>x.id!==id);renderIngTags();}
-function addRecipe(){
-  const name=document.getElementById('recipe-name').value.trim(); if(!name) return;
-  state.recipes.push({id:Date.now().toString(),name,ings:[...currentRecipeIngs]});
-  currentRecipeIngs=[];document.getElementById('recipe-name').value='';renderIngTags();save();
+
+function removeIng(id){
+  currentRecipeIngs = currentRecipeIngs.filter(x => x.id !== id);
+  renderIngTags();
 }
-function removeRecipe(id){state.recipes=state.recipes.filter(x=>x.id!==id);save();renderFab();}
+
+function addRecipe(){
+  const name = document.getElementById('recipe-name').value.trim();
+  if (!name) return;
+  state.recipes.push({id: Date.now().toString(), name, ings: [...currentRecipeIngs]});
+  currentRecipeIngs = [];
+  document.getElementById('recipe-name').value = '';
+  renderIngTags();
+  save();
+}
+
+function removeRecipe(id){
+  state.recipes = state.recipes.filter(x => x.id !== id);
+  save();
+  renderFab();
+}
+
 function renderFab(){
-  const sel=document.getElementById('ing-item');
-  sel.innerHTML='<option value="">-- Sélectionner --</option>';
-  state.items.forEach(it=>{sel.innerHTML+=`<option value="${it.id}">${it.name} (${fmt(it.qty)} ${it.unit})</option>`;});
-  const el=document.getElementById('fab-list');
-  if(!state.recipes.length){el.innerHTML='<div class="empty">Aucune recette.</div>';return;}
-  let html='';
-  state.recipes.forEach(r=>{
-    const feasible=r.ings.every(ing=>{const item=state.items.find(x=>x.id===ing.id);return item&&item.qty>=ing.qty;});
-    const maxBatch=r.ings.length===0?'∞':Math.floor(Math.min(...r.ings.map(ing=>{const item=state.items.find(x=>x.id===ing.id);return item?item.qty/ing.qty:0;})));
-    const ingNames=r.ings.map(ing=>{const item=state.items.find(x=>x.id===ing.id);return item?`${item.name} × ${fmt(ing.qty)}`:'?';}).join(' · ');
-    html+=`<div class="recipe-card ${feasible?'feasible':'not-feasible'}">
+  const sel = document.getElementById('ing-item');
+  sel.innerHTML = '<option value="">-- Sélectionner --</option>';
+  state.items.forEach(it => {
+    sel.innerHTML += `<option value="${it.id}">${it.name} (${fmt(it.qty)} ${it.unit})</option>`;
+  });
+
+  const el = document.getElementById('fab-list');
+  if (!state.recipes.length){
+    el.innerHTML = '<div class="empty">Aucune recette.</div>';
+    return;
+  }
+
+  let html = '';
+  state.recipes.forEach(r => {
+    const feasible = r.ings.every(ing => {
+      const item = state.items.find(x => x.id === ing.id);
+      return item && item.qty >= ing.qty;
+    });
+    
+    const maxBatch = r.ings.length === 0 ? '∞' : Math.floor(Math.min(...r.ings.map(ing => {
+      const item = state.items.find(x => x.id === ing.id);
+      return item ? item.qty / ing.qty : 0;
+    })));
+
+    const ingNames = r.ings.map(ing => {
+      const item = state.items.find(x => x.id === ing.id);
+      return item ? `${item.name} × ${fmt(ing.qty)}` : '?';
+    }).join(' · ');
+
+    html += `<div class="recipe-card ${feasible ? 'feasible' : 'not-feasible'}">
       <div class="recipe-header">
         <span class="recipe-name">${r.name}</span>
         <div style="display:flex;gap:8px;align-items:center">
-          <span class="badge ${feasible?'badge-green':'badge-red'}">${feasible?'× '+maxBatch+' faisable':'manque stock'}</span>
+          <span class="badge ${feasible ? 'badge-green' : 'badge-red'}">${feasible ? '× ' + maxBatch + ' faisable' : 'manque stock'}</span>
           <button class="btn-icon" onclick="removeRecipe('${r.id}')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button>
         </div>
       </div>
-      <div class="ing-text">${ingNames||'Aucun ingrédient'}</div>
+      <div class="ing-text">${ingNames || 'Aucun ingrédient'}</div>
     </div>`;
   });
-  el.innerHTML=html;
+  el.innerHTML = html;
 }
 
 // ── CONTACTS ─────────────────────────────────────────────────
-function getColor(name){const i=(name||'A').charCodeAt(0)%COLORS.length;return COLORS[i];}
+function getColor(name){
+  const i = (name || 'A').charCodeAt(0) % COLORS.length;
+  return COLORS[i];
+}
+
 function openContactModal(id){
-  editingContactId=id||null;
-  const c=id?state.contacts.find(x=>x.id===id):null;
-  document.getElementById('cmodal-title').textContent=c?'Modifier':'Nouveau contact';
-  document.getElementById('c-name').value=c?.name||'';document.getElementById('c-role').value=c?.role||'';
-  document.getElementById('c-email').value=c?.email||'';document.getElementById('c-phone').value=c?.phone||'';
-  document.getElementById('c-notes').value=c?.notes||'';
-  document.getElementById('c-del-btn').style.display=c?'block':'none';
-  document.getElementById('contact-modal').style.display='flex';
-  setTimeout(()=>document.getElementById('c-name').focus(),50);
+  editingContactId = id || null;
+  const c = id ? state.contacts.find(x => x.id === id) : null;
+  document.getElementById('cmodal-title').textContent = c ? 'Modifier' : 'Nouveau contact';
+  document.getElementById('c-name').value = c?.name || '';
+  document.getElementById('c-role').value = c?.role || '';
+  document.getElementById('c-email').value = c?.email || '';
+  document.getElementById('c-phone').value = c?.phone || '';
+  document.getElementById('c-notes').value = c?.notes || '';
+  document.getElementById('c-del-btn').style.display = c ? 'block' : 'none';
+  document.getElementById('contact-modal').style.display = 'flex';
 }
+
 function saveContact(){
-  const name=document.getElementById('c-name').value.trim(); if(!name) return;
-  const data={name,role:document.getElementById('c-role').value.trim(),email:document.getElementById('c-email').value.trim(),phone:document.getElementById('c-phone').value.trim(),notes:document.getElementById('c-notes').value.trim()};
-  if(editingContactId){const c=state.contacts.find(x=>x.id===editingContactId);if(c)Object.assign(c,data);}
-  else state.contacts.push({id:Date.now().toString(),...data});
-  closeModal('contact-modal');save();
+  const name = document.getElementById('c-name').value.trim();
+  if (!name) return;
+  const data = {
+    name,
+    role: document.getElementById('c-role').value.trim(),
+    email: document.getElementById('c-email').value.trim(),
+    phone: document.getElementById('c-phone').value.trim(),
+    notes: document.getElementById('c-notes').value.trim()
+  };
+  if (editingContactId){
+    const c = state.contacts.find(x => x.id === editingContactId);
+    if (c) Object.assign(c, data);
+  } else {
+    state.contacts.push({id: Date.now().toString(), ...data});
+  }
+  closeModal('contact-modal');
+  save();
 }
+
 function deleteContact(){
-  if(!editingContactId||!confirm('Supprimer ?')) return;
-  state.contacts=state.contacts.filter(x=>x.id!==editingContactId);
-  closeModal('contact-modal');save();
+  if (!editingContactId || !confirm('Supprimer ?')) return;
+  state.contacts = state.contacts.filter(x => x.id !== editingContactId);
+  closeModal('contact-modal');
+  save();
 }
+
 function renderContacts(){
-  const grid=document.getElementById('contact-grid'),empty=document.getElementById('contact-empty');
-  if(!state.contacts.length){grid.innerHTML='';empty.style.display='block';return;}
-  empty.style.display='none';
-  grid.innerHTML=state.contacts.map(c=>{
-    const[bg,fg]=getColor(c.name);
-    const initials=(c.name||'?').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
-    return`<div class="contact-card" onclick="openContactModal('${c.id}')">
+  const grid = document.getElementById('contact-grid');
+  const empty = document.getElementById('contact-empty');
+  
+  if (!state.contacts.length){
+    grid.innerHTML = '';
+    empty.style.display = 'block';
+    return;
+  }
+  
+  empty.style.display = 'none';
+  grid.innerHTML = state.contacts.map(c => {
+    const [bg, fg] = getColor(c.name);
+    const initials = (c.name || '?').split(' ').map(w => w[0]).join('').toUpperCase().slice(0,2);
+    return `<div class="contact-card" onclick="openContactModal('${c.id}')">
       <div class="avatar" style="background:${bg};color:${fg}">${initials}</div>
       <div class="contact-name">${c.name}</div>
-      ${c.role?`<div class="contact-role">${c.role}</div>`:''}
-      ${c.email?`<div class="contact-info"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>${c.email}</div>`:''}
-      ${c.phone?`<div class="contact-info"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13 19.79 19.79 0 0 1 1.61 4.38 2 2 0 0 1 3.58 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 9.91a16 16 0 0 0 6.06 6.06l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>${c.phone}</div>`:''}
-      ${c.notes?`<div class="contact-notes">${c.notes.slice(0,70)}${c.notes.length>70?'…':''}</div>`:''}
+      ${c.role ? `<div class="contact-role">${c.role}</div>` : ''}
+      ${c.email ? `<div class="contact-info"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>${c.email}</div>` : ''}
+      ${c.phone ? `<div class="contact-info"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13 19.79 19.79 0 0 1 1.61 4.38 2 2 0 0 1 3.58 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 9.91a16 16 0 0 0 6.06 6.06l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>${c.phone}</div>` : ''}
+      ${c.notes ? `<div class="contact-notes">${c.notes.slice(0,70)}${c.notes.length>70?'…':''}</div>` : ''}
     </div>`;
   }).join('');
 }
 
 // ── HAUTE CRIMINALITÉ ─────────────────────────────────────────
-function hexToRgb(hex){const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);return`${r},${g},${b}`;}
+function hexToRgb(hex){
+  const r = parseInt(hex.slice(1,3),16);
+  const g = parseInt(hex.slice(3,5),16);
+  const b = parseInt(hex.slice(5,7),16);
+  return `${r},${g},${b}`;
+}
+
 function addHCGroup(){
-  const name=document.getElementById('hc-group-name').value.trim(); if(!name) return;
-  const color=document.getElementById('hc-group-color').value;
-  state.hcGroups.push({id:Date.now().toString(),name,color,products:[]});
-  document.getElementById('hc-group-name').value='';
+  const name = document.getElementById('hc-group-name').value.trim();
+  if (!name) return;
+  const color = document.getElementById('hc-group-color').value;
+  state.hcGroups.push({id: Date.now().toString(), name, color, products: []});
+  document.getElementById('hc-group-name').value = '';
   save();
 }
+
 function openHCGroupModal(id){
-  editingHCGroupId=id;
-  const g=state.hcGroups.find(x=>x.id===id); if(!g) return;
-  document.getElementById('hcg-name').value=g.name;
-  document.getElementById('hcg-color').value=g.color||'#E24B4A';
-  document.getElementById('hc-group-modal').style.display='flex';
+  editingHCGroupId = id;
+  const g = state.hcGroups.find(x => x.id === id);
+  if (!g) return;
+  document.getElementById('hcg-name').value = g.name;
+  document.getElementById('hcg-color').value = g.color || '#E24B4A';
+  document.getElementById('hc-group-modal').style.display = 'flex';
 }
+
 function saveHCGroup(){
-  const g=state.hcGroups.find(x=>x.id===editingHCGroupId); if(!g) return;
-  const name=document.getElementById('hcg-name').value.trim(); if(!name) return;
-  g.name=name; g.color=document.getElementById('hcg-color').value;
-  closeModal('hc-group-modal');save();
-}
-function deleteHCGroup(){
-  if(!confirm('Supprimer ce groupe et tous ses produits ?')) return;
-  state.hcGroups=state.hcGroups.filter(x=>x.id!==editingHCGroupId);
-  closeModal('hc-group-modal');save();
-}
-function addHCProduct(groupId){
-  const nameEl=document.getElementById('hcp-new-name-'+groupId);
-  const priceEl=document.getElementById('hcp-new-price-'+groupId);
-  const unitEl=document.getElementById('hcp-new-unit-'+groupId);
-  const name=nameEl.value.trim();
-  const price=parseFloat(priceEl.value);
-  if(!name||isNaN(price)) return;
-  const unit=unitEl.value.trim()||'unité';
-  const g=state.hcGroups.find(x=>x.id===groupId); if(!g) return;
-  g.products.push({id:Date.now().toString(),name,price,unit});
-  nameEl.value='';priceEl.value='';unitEl.value='';
+  const g = state.hcGroups.find(x => x.id === editingHCGroupId);
+  if (!g) return;
+  const name = document.getElementById('hcg-name').value.trim();
+  if (!name) return;
+  g.name = name;
+  g.color = document.getElementById('hcg-color').value;
+  closeModal('hc-group-modal');
   save();
 }
-function openHCProductModal(groupId,productId){
-  editingHCGroupId=groupId;editingHCProductId=productId;
-  const g=state.hcGroups.find(x=>x.id===groupId); if(!g) return;
-  const p=g.products.find(x=>x.id===productId); if(!p) return;
-  document.getElementById('hcp-title').textContent='Modifier le produit';
-  document.getElementById('hcp-name').value=p.name;
-  document.getElementById('hcp-price').value=p.price;
-  document.getElementById('hcp-unit').value=p.unit||'';
-  document.getElementById('hcp-del-btn').style.display='block';
-  document.getElementById('hc-product-modal').style.display='flex';
+
+function deleteHCGroup(){
+  if (!confirm('Supprimer ce groupe et tous ses produits ?')) return;
+  state.hcGroups = state.hcGroups.filter(x => x.id !== editingHCGroupId);
+  closeModal('hc-group-modal');
+  save();
 }
+
+function addHCProduct(groupId){
+  const name = document.getElementById('hcp-new-name-' + groupId).value.trim();
+  const price = parseFloat(document.getElementById('hcp-new-price-' + groupId).value);
+  if (!name || isNaN(price)) return;
+  const unit = document.getElementById('hcp-new-unit-' + groupId).value.trim() || 'unité';
+  
+  const g = state.hcGroups.find(x => x.id === groupId);
+  if (!g) return;
+  
+  g.products.push({id: Date.now().toString(), name, price, unit});
+  document.getElementById('hcp-new-name-' + groupId).value = '';
+  document.getElementById('hcp-new-price-' + groupId).value = '';
+  document.getElementById('hcp-new-unit-' + groupId).value = '';
+  save();
+}
+
+function openHCProductModal(groupId, productId){
+  editingHCGroupId = groupId;
+  editingHCProductId = productId;
+  const g = state.hcGroups.find(x => x.id === groupId);
+  if (!g) return;
+  const p = g.products.find(x => x.id === productId);
+  if (!p) return;
+  
+  document.getElementById('hcp-title').textContent = 'Modifier le produit';
+  document.getElementById('hcp-name').value = p.name;
+  document.getElementById('hcp-price').value = p.price;
+  document.getElementById('hcp-unit').value = p.unit || '';
+  document.getElementById('hcp-del-btn').style.display = 'block';
+  document.getElementById('hc-product-modal').style.display = 'flex';
+}
+
 function saveHCProduct(){
-  const g=state.hcGroups.find(x=>x.id===editingHCGroupId); if(!g) return;
-  const p=g.products.find(x=>x.id===editingHCProductId); if(!p) return;
-  const name=document.getElementById('hcp-name').value.trim();
-  const price=parseFloat(document.getElementById('hcp-price').value);
-  if(!name||isNaN(price)) return;
-  p.name=name;p.price=price;p.unit=document.getElementById('hcp-unit').value.trim()||'unité';
-  closeModal('hc-product-modal');save();
+  const g = state.hcGroups.find(x => x.id === editingHCGroupId);
+  if (!g) return;
+  const p = g.products.find(x => x.id === editingHCProductId);
+  if (!p) return;
+  
+  const name = document.getElementById('hcp-name').value.trim();
+  const price = parseFloat(document.getElementById('hcp-price').value);
+  if (!name || isNaN(price)) return;
+  
+  p.name = name;
+  p.price = price;
+  p.unit = document.getElementById('hcp-unit').value.trim() || 'unité';
+  closeModal('hc-product-modal');
+  save();
 }
+
 function deleteHCProduct(){
-  if(!confirm('Supprimer ce produit ?')) return;
-  const g=state.hcGroups.find(x=>x.id===editingHCGroupId); if(!g) return;
-  g.products=g.products.filter(x=>x.id!==editingHCProductId);
-  closeModal('hc-product-modal');save();
+  if (!confirm('Supprimer ce produit ?')) return;
+  const g = state.hcGroups.find(x => x.id === editingHCGroupId);
+  if (!g) return;
+  g.products = g.products.filter(x => x.id !== editingHCProductId);
+  closeModal('hc-product-modal');
+  save();
 }
+
 function renderHC(){
-  const allProducts=state.hcGroups.flatMap(g=>g.products);
-  const prices=allProducts.map(p=>p.price).filter(p=>!isNaN(p));
-  document.getElementById('hc-stat-groups').textContent=state.hcGroups.length;
-  document.getElementById('hc-stat-products').textContent=allProducts.length;
-  document.getElementById('hc-stat-min').textContent=prices.length?money(Math.min(...prices)):'–';
-  document.getElementById('hc-stat-max').textContent=prices.length?money(Math.max(...prices)):'–';
-  const el=document.getElementById('hc-grid'),empty=document.getElementById('hc-empty');
-  if(!state.hcGroups.length){el.innerHTML='';empty.style.display='block';return;}
-  empty.style.display='none';
-  el.innerHTML=state.hcGroups.map(g=>{
-    const col=g.color||'#E24B4A';
-    const rgb=hexToRgb(col);
-    const products=g.products||[];
-    return`<div class="hc-group-card">
+  const allProducts = state.hcGroups.flatMap(g => g.products);
+  const prices = allProducts.map(p => p.price).filter(p => !isNaN(p));
+  
+  document.getElementById('hc-stat-groups').textContent = state.hcGroups.length;
+  document.getElementById('hc-stat-products').textContent = allProducts.length;
+  document.getElementById('hc-stat-min').textContent = prices.length ? money(Math.min(...prices)) : '–';
+  document.getElementById('hc-stat-max').textContent = prices.length ? money(Math.max(...prices)) : '–';
+
+  const el = document.getElementById('hc-grid');
+  const empty = document.getElementById('hc-empty');
+  
+  if (!state.hcGroups.length){
+    el.innerHTML = '';
+    empty.style.display = 'block';
+    return;
+  }
+  
+  empty.style.display = 'none';
+  el.innerHTML = state.hcGroups.map(g => {
+    const col = g.color || '#E24B4A';
+    const rgb = hexToRgb(col);
+    const products = g.products || [];
+    return `<div class="hc-group-card">
       <div class="hc-group-header" style="background:rgba(${rgb},.1);border-bottom:2px solid ${col}">
         <span class="hc-group-name" style="color:${col}">${g.name}</span>
         <div style="display:flex;gap:6px;align-items:center">
@@ -790,13 +944,13 @@ function renderHC(){
         </div>
       </div>
       <div class="hc-group-body">
-        ${products.length?products.map(p=>`
+        ${products.length ? products.map(p => `
           <div class="hc-product-row">
             <span class="hc-product-name">${p.name}</span>
             <span class="hc-price">${money(p.price)}</span>
             <span style="font-size:11px;color:var(--text3);margin-left:2px">/${p.unit||'unité'}</span>
             <button class="btn-icon btn-icon-edit" onclick="openHCProductModal('${g.id}','${p.id}')" title="Modifier"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
-          </div>`).join(''):'<div style="font-size:12px;color:var(--text3);padding:8px 0">Aucun produit.</div>'}
+          </div>`).join('') : '<div style="font-size:12px;color:var(--text3);padding:8px 0">Aucun produit.</div>'}
         <div class="hc-add-product">
           <input type="text" id="hcp-new-name-${g.id}" placeholder="Produit…" style="font-size:12px;padding:5px 8px"/>
           <input type="number" id="hcp-new-price-${g.id}" placeholder="Prix $" min="0" step="any" style="font-size:12px;padding:5px 8px"/>
@@ -810,87 +964,124 @@ function renderHC(){
 
 // ── FINANCES ──────────────────────────────────────────────────
 function addTransaction(){
-  const type=document.getElementById('tx-type').value;
-  const label=document.getElementById('tx-label').value.trim();
-  const amount=parseFloat(document.getElementById('tx-amount').value);
-  const cat=document.getElementById('tx-cat').value.trim()||'Général';
-  const date=document.getElementById('tx-date').value||new Date().toISOString().slice(0,10);
-  if(!label||isNaN(amount)||amount<=0) return;
-  state.transactions.unshift({id:Date.now().toString(),type,label,amount,cat,date});
+  const type = document.getElementById('tx-type').value;
+  const label = document.getElementById('tx-label').value.trim();
+  const amount = parseFloat(document.getElementById('tx-amount').value);
+  const cat = document.getElementById('tx-cat').value.trim() || 'Général';
+  const date = document.getElementById('tx-date').value || new Date().toISOString().slice(0,10);
+  
+  if (!label || isNaN(amount) || amount <= 0) return;
+  
+  state.transactions.unshift({id: Date.now().toString(), type, label, amount, cat, date});
   save();
-  document.getElementById('tx-label').value='';
-  document.getElementById('tx-amount').value='';
+  document.getElementById('tx-label').value = '';
+  document.getElementById('tx-amount').value = '';
 }
-function removeTransaction(id){state.transactions=state.transactions.filter(x=>x.id!==id);save();renderFinances();}
-function setFinFilter(f,btn){
-  finFilter=f;
-  document.querySelectorAll('.fin-filter-btn[data-cat]').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');renderFinances();
+
+function removeTransaction(id){
+  state.transactions = state.transactions.filter(x => x.id !== id);
+  save();
+  renderFinances();
 }
-function setFinType(f,btn){
-  finTypeFilter=f;
-  document.querySelectorAll('.fin-filter-btn[data-type]').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');renderFinances();
+
+function setFinFilter(f, btn){
+  finFilter = f;
+  document.querySelectorAll('#fin-cat-filters .fin-filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderFinances();
 }
+
+function setFinType(f, btn){
+  finTypeFilter = f;
+  document.querySelectorAll('.fin-filter-btn').forEach(b => {
+    if (b.getAttribute('onclick').includes('setFinType')) b.classList.remove('active');
+  });
+  btn.classList.add('active');
+  renderFinances();
+}
+
+function setFinCat(f, btn){
+  finFilter = f;
+  document.querySelectorAll('#fin-cat-filters .fin-filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderFinances();
+}
+
 function renderFinances(){
-  const tx=state.transactions;
-  const revenus=tx.filter(t=>t.type==='revenu').reduce((s,t)=>s+t.amount,0);
-  const depenses=tx.filter(t=>t.type==='depense').reduce((s,t)=>s+t.amount,0);
-  const solde=revenus-depenses;
-  document.getElementById('fin-stat-rev').textContent=money(revenus);
-  document.getElementById('fin-stat-dep').textContent=money(depenses);
-  const solEl=document.getElementById('fin-stat-sol');
-  solEl.textContent=money(Math.abs(solde));
-  solEl.style.color=solde>=0?'var(--green-text)':'var(--red-text)';
-  document.getElementById('fin-stat-nb').textContent=tx.length;
+  const tx = state.transactions;
+  const revenus = tx.filter(t => t.type === 'revenu').reduce((s,t) => s + t.amount, 0);
+  const depenses = tx.filter(t => t.type === 'depense').reduce((s,t) => s + t.amount, 0);
+  const solde = revenus - depenses;
 
-  // Filtres catégories
-  const cats=[...new Set(tx.map(t=>t.cat))];
-  const catBar=document.getElementById('fin-cat-filters');
-  const activeBtn=finFilter;
-  catBar.innerHTML=`<button class="fin-filter-btn ${finFilter==='all'?'active':''}" data-cat="all" onclick="setFinCat('all',this)">Toutes</button>`;
-  cats.forEach(c=>{ catBar.innerHTML+=`<button class="fin-filter-btn ${finFilter===c?'active':''}" data-cat="${c}" onclick="setFinCat('${c}',this)">${c}</button>`; });
+  document.getElementById('fin-stat-rev').textContent = money(revenus);
+  document.getElementById('fin-stat-dep').textContent = money(depenses);
+  const solEl = document.getElementById('fin-stat-sol');
+  solEl.textContent = money(Math.abs(solde));
+  solEl.style.color = solde >= 0 ? 'var(--green-text)' : 'var(--red-text)';
+  document.getElementById('fin-stat-nb').textContent = tx.length;
 
-  let visible=tx;
-  if(finFilter!=='all') visible=visible.filter(t=>t.cat===finFilter);
-  if(finTypeFilter!=='all') visible=visible.filter(t=>t.type===finTypeFilter);
+  // Catégories
+  const cats = [...new Set(tx.map(t => t.cat))];
+  const catBar = document.getElementById('fin-cat-filters');
+  catBar.innerHTML = `<button class="fin-filter-btn ${finFilter==='all'?'active':''}" data-cat="all" onclick="setFinCat('all',this)">Toutes</button>`;
+  cats.forEach(c => {
+    catBar.innerHTML += `<button class="fin-filter-btn ${finFilter===c?'active':''}" data-cat="${c}" onclick="setFinCat('${c}',this)">${c}</button>`;
+  });
 
-  const el=document.getElementById('tx-list');
-  if(!visible.length){el.innerHTML='<div class="empty">Aucune transaction.</div>';return;}
-  el.innerHTML=visible.map(t=>{
-    const icon=t.type==='revenu'?'💰':'💸';
-    const dateStr=t.date?new Date(t.date+'T12:00:00').toLocaleDateString('fr-FR',{day:'2-digit',month:'short',year:'numeric'}):'';
-    return`<div class="tx-row">
+  let visible = tx;
+  if (finFilter !== 'all') visible = visible.filter(t => t.cat === finFilter);
+  if (finTypeFilter !== 'all') visible = visible.filter(t => t.type === finTypeFilter);
+
+  const el = document.getElementById('tx-list');
+  if (!visible.length){
+    el.innerHTML = '<div class="empty">Aucune transaction.</div>';
+    return;
+  }
+
+  el.innerHTML = visible.map(t => {
+    const icon = t.type === 'revenu' ? '💰' : '💸';
+    const dateStr = t.date ? new Date(t.date + 'T12:00:00').toLocaleDateString('fr-FR', {day:'2-digit', month:'short', year:'numeric'}) : '';
+    return `<div class="tx-row">
       <div class="tx-icon ${t.type}">${icon}</div>
       <div class="tx-info">
         <div class="tx-label">${t.label}</div>
-        <div class="tx-sub">${t.cat}${dateStr?' · '+dateStr:''}</div>
+        <div class="tx-sub">${t.cat}${dateStr ? ' · ' + dateStr : ''}</div>
       </div>
-      <div class="tx-amount ${t.type}">${t.type==='revenu'?'+':'−'}${money(t.amount)}</div>
+      <div class="tx-amount ${t.type}">${t.type==='revenu' ? '+' : '−'}${money(t.amount)}</div>
       <button class="btn-icon" onclick="removeTransaction('${t.id}')" title="Supprimer"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button>
     </div>`;
   }).join('');
 }
-function setFinCat(f,btn){
-  finFilter=f;
-  document.querySelectorAll('#fin-cat-filters .fin-filter-btn').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');renderFinances();
-}
 
 // ── UTILS ─────────────────────────────────────────────────────
-function closeModal(id){document.getElementById(id).style.display='none';}
-function closeModalIf(e,id){if(e.target.id===id)closeModal(id);}
-function render(){renderStock();renderFab();renderContacts();renderProjects();renderHC();renderFinances();}
-document.addEventListener('keydown',e=>{
-  if(e.key==='Escape')['contact-modal','project-modal','apt-modal','hc-product-modal','hc-group-modal'].forEach(id=>{
-    if(document.getElementById(id).style.display!=='none')closeModal(id);
-  });
-  if(e.key==='Enter'&&e.target.id==='new-op') addOp();
-  if(e.key==='Enter'&&e.target.id==='item-name') addItem();
-  if(e.key==='Enter'&&e.target.id==='apt-name') addApartment();
+function closeModal(id){
+  document.getElementById(id).style.display = 'none';
+}
+
+function closeModalIf(e, id){
+  if (e.target.id === id) closeModal(id);
+}
+
+function render(){
+  renderStock();
+  renderFab();
+  renderContacts();
+  renderHC();
+  renderFinances();
+}
+
+// ── KEYBOARD SHORTCUTS ───────────────────────────────────────
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape'){
+    ['contact-modal','apt-modal','hc-product-modal','hc-group-modal'].forEach(id => {
+      if (document.getElementById(id).style.display !== 'none') closeModal(id);
+    });
+  }
+  if (e.key === 'Enter' && e.target.id === 'item-name') addItem();
+  if (e.key === 'Enter' && e.target.id === 'apt-name') addApartment();
 });
-// Init date du jour pour les transactions
-document.getElementById('tx-date').value=new Date().toISOString().slice(0,10);
+
+// Init
+document.getElementById('tx-date').value = new Date().toISOString().slice(0,10);
+render();
 </script>
-</body>
-</html>
