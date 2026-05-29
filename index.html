@@ -1,14 +1,156 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>PollyPaupiettes</title>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
 <title>PollyPaupiettes</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
 <style>
+  :root {
+    --bg:#F7F6F2; --bg2:#EFEDE7; --bg3:#E5E3DB; --card:#FFFFFF; --border:#DDD9CF;
+    --text:#1A1916; --text2:#6B6861; --text3:#9C9890;
+    --green:#1D9E75; --green-bg:#E1F5EE; --green-text:#0F6E56;
+    --amber-bg:#FAEEDA; --amber-text:#854F0B;
+    --red:#E24B4A; --red-bg:#FCEBEB; --red-text:#A32D2D;
+    --blue-bg:#E6F1FB; --blue-text:#185FA5;
+    --radius:10px; --radius-sm:6px;
+    --shadow:0 1px 3px rgba(0,0,0,.06),0 1px 2px rgba(0,0,0,.04);
+    --shadow-md:0 4px 12px rgba(0,0,0,.08),0 2px 4px rgba(0,0,0,.05);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+
+  .header{background:var(--card);border-bottom:1px solid var(--border);padding:0 24px;position:sticky;top:0;z-index:10;display:flex;align-items:center}
+  .header-logo{font-family:'DM Mono',monospace;font-size:14px;font-weight:500;padding:16px 24px 16px 0;border-right:1px solid var(--border);margin-right:24px;color:var(--text);white-space:nowrap}
+  .tabs{display:flex;gap:0;flex:1}
+  .tab{padding:18px 14px;font-size:13px;font-weight:500;border:none;background:none;cursor:pointer;color:var(--text2);border-bottom:2px solid transparent;transition:all .15s;display:flex;align-items:center;gap:6px;white-space:nowrap}
+  .tab:hover{color:var(--text)}.tab.active{color:var(--text);border-bottom-color:var(--green)}
+  .tab svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.8}
+
+  .sync-bar{background:var(--bg2);border-bottom:1px solid var(--border);padding:7px 24px;display:flex;align-items:center;gap:10px;font-size:12px;color:var(--text2)}
+  .sync-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;transition:background .3s}
+  .sync-dot.connected{background:var(--green)}.sync-dot.connecting{background:#EF9F27;animation:pulse 1s infinite}.sync-dot.error{background:var(--red)}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+  #sync-label{font-weight:500}
+  #sync-label.connected{color:var(--green-text)}.#sync-label.error{color:var(--red-text)}
+  .sync-time{margin-left:auto;font-family:'DM Mono',monospace;font-size:11px;color:var(--text3)}
+
+  .main{max-width:900px;margin:0 auto;padding:28px 20px}
+  .section{display:none}.section.active{display:block}
+
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:24px}
+  .stat{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px}
+  .stat-num{font-family:'DM Mono',monospace;font-size:26px;font-weight:500;line-height:1}
+  .stat-label{font-size:11px;color:var(--text2);margin-top:4px;text-transform:uppercase;letter-spacing:.05em}
+
+  .card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px 20px;margin-bottom:14px;box-shadow:var(--shadow)}
+  .card-title{font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.07em;margin-bottom:14px}
+
+  input[type=text],input[type=number],input[type=email],input[type=tel],input[type=date],select,textarea{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 10px;font-size:13px;font-family:'DM Sans',sans-serif;color:var(--text);outline:none;transition:border-color .15s}
+  input:focus,select:focus,textarea:focus{border-color:var(--green)}
+  .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .row input[type=text]{flex:1;min-width:100px}
+  .row input[type=number]{width:80px}
+  .row select{flex:1}
+
+  .btn{padding:8px 14px;font-size:13px;font-weight:500;border-radius:var(--radius-sm);cursor:pointer;border:1px solid var(--border);background:var(--bg2);color:var(--text);font-family:'DM Sans',sans-serif;transition:all .15s}
+  .btn:hover{background:var(--bg3)}
+  .btn-primary{background:var(--green);color:white;border-color:var(--green)}
+  .btn-primary:hover{background:var(--green-text);border-color:var(--green-text)}
+  .btn-danger{background:var(--red);color:white;border-color:var(--red)}
+  .btn-danger:hover{background:var(--red-text)}
+  .btn-sm{padding:5px 10px;font-size:12px}
+  .btn-icon{background:none;border:none;cursor:pointer;color:var(--text2);padding:4px;border-radius:4px;display:inline-flex;align-items:center;transition:all .15s}
+  .btn-icon:hover{color:var(--red);background:var(--red-bg)}
+  .btn-icon-edit:hover{color:var(--green);background:var(--green-bg)}
+
+  .badge{display:inline-block;font-size:11px;font-weight:500;padding:2px 8px;border-radius:999px;white-space:nowrap}
+  .badge-green{background:var(--green-bg);color:var(--green-text)}
+  .badge-amber{background:var(--amber-bg);color:var(--amber-text)}
+  .badge-red{background:var(--red-bg);color:var(--red-text)}
+  .badge-gray{background:var(--bg2);color:var(--text2)}
+
+  .item-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--bg2)}
+  .item-row:last-child{border-bottom:none;padding-bottom:0}
+  .item-name{font-weight:500;font-size:14px;flex:1}
+  .qty-controls{display:flex;align-items:center;gap:4px;font-family:'DM Mono',monospace;font-size:13px;color:var(--text2)}
+  .qty-btn{background:var(--bg2);border:1px solid var(--border);border-radius:4px;width:24px;height:24px;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;color:var(--text2);transition:all .15s}
+  .qty-btn:hover{background:var(--bg3);color:var(--text)}
+  .qty-val{min-width:70px;text-align:center}
+
+  .recipe-card{background:var(--bg);border:1px solid var(--border);border-left:3px solid var(--border);border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:8px}
+  .recipe-card.feasible{border-left-color:var(--green)}.recipe-card.not-feasible{border-left-color:var(--red)}
+  .recipe-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
+  .recipe-name{font-weight:500;font-size:14px}
+  .ing-text{font-size:12px;color:var(--text2);margin-top:4px}
+  .ing-tag{display:inline-flex;align-items:center;gap:4px;font-size:11px;background:var(--bg2);border:1px solid var(--border);border-radius:999px;padding:3px 8px;margin:2px}
+  .ing-tag .rm{cursor:pointer;color:var(--text3)}.ing-tag .rm:hover{color:var(--red)}
+  .add-ing-row{display:flex;gap:6px;align-items:center}
+  .add-ing-row select,.add-ing-row input{flex:1}
+
+  .contact-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px}
+  .contact-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;cursor:pointer;transition:border-color .15s,box-shadow .15s}
+  .contact-card:hover{border-color:var(--green);box-shadow:var(--shadow-md)}
+  .avatar{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:14px;margin-bottom:12px;font-family:'DM Mono',monospace}
+  .contact-name{font-weight:600;font-size:14px;margin-bottom:2px}
+  .contact-role{font-size:12px;color:var(--text2);margin-bottom:8px}
+  .contact-info{font-size:12px;color:var(--text2);margin-bottom:2px;display:flex;gap:6px;align-items:center}
+  .contact-notes{font-size:12px;color:var(--text2);font-style:italic;margin-top:8px;line-height:1.4}
+
+  .project-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px 20px;margin-bottom:14px;box-shadow:var(--shadow)}
+  .project-card.status-urgent{border-left:3px solid var(--red)}
+  .project-card.status-active{border-left:3px solid var(--green)}
+  .project-card.status-waiting{border-left:3px solid #EF9F27}
+  .project-card.status-done{border-left:3px solid var(--text3);opacity:.8}
+  .project-header{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:8px}
+  .project-name{font-weight:600;font-size:15px}
+  .project-meta{display:flex;align-items:center;gap:8px;margin-top:4px;flex-wrap:wrap}
+  .project-desc{font-size:13px;color:var(--text2);margin-bottom:12px;line-height:1.5}
+  .progress-bar{height:5px;background:var(--bg2);border-radius:999px;overflow:hidden;margin:10px 0}
+  .progress-fill{height:100%;background:var(--green);border-radius:999px;transition:width .4s}
+  .ops-list{margin-top:8px}
+  .op-row{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--bg2);font-size:13px}
+  .op-row:last-child{border-bottom:none}
+  .op-check{width:15px;height:15px;cursor:pointer;accent-color:var(--green);flex-shrink:0}
+  .op-name{flex:1}.op-name.done{text-decoration:line-through;color:var(--text3)}
+  .dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;display:inline-block}
+  .dot-active{background:var(--green)}.dot-waiting{background:#EF9F27}.dot-urgent{background:var(--red)}.dot-done{background:var(--text3)}
+  .filters{display:flex;gap:6px;flex-wrap:wrap}
+  .filter-btn{padding:5px 12px;font-size:12px;border:1px solid var(--border);border-radius:999px;background:var(--card);cursor:pointer;color:var(--text2);font-family:'DM Sans',sans-serif;transition:all .15s}
+  .filter-btn:hover{border-color:var(--green);color:var(--green)}
+  .filter-btn.active{background:var(--green);color:white;border-color:var(--green)}
+  .top-bar{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:10px}
+  .date-badge{font-family:'DM Mono',monospace;font-size:11px;color:var(--text2)}
+
+  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.35);display:flex;align-items:flex-start;justify-content:center;padding-top:60px;z-index:200}
+  .modal{background:var(--card);border-radius:var(--radius);padding:24px;width:400px;max-width:95vw;max-height:85vh;overflow-y:auto;box-shadow:var(--shadow-md)}
+  .modal-title{font-weight:600;font-size:16px;margin-bottom:18px}
+  .field{margin-bottom:12px}
+  .field label{font-size:12px;font-weight:500;color:var(--text2);display:block;margin-bottom:4px;text-transform:uppercase;letter-spacing:.04em}
+  .field input,.field select,.field textarea{width:100%}
+  .field textarea{resize:vertical;min-height:80px;font-size:13px}
+  .modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:20px;flex-wrap:wrap}
+  .modal-actions .left{margin-right:auto}
+
+  .empty{text-align:center;color:var(--text2);font-size:13px;padding:3rem 0}
+  .loading{text-align:center;color:var(--text2);font-size:13px;padding:3rem 0;font-style:italic}
+
+  @media(max-width:600px){
+    .stats{grid-template-columns:repeat(2,1fr)}
+    .contact-grid{grid-template-columns:1fr 1fr}
+    .header{padding:0 12px}
+    .main{padding:16px 12px}
+    .tab{padding:14px 10px;font-size:12px}
+  }
 :root{
   --bg:#F7F6F2;--bg2:#EFEDE7;--bg3:#E5E3DB;--card:#FFFFFF;--border:#DDD9CF;
   --text:#1A1916;--text2:#6B6861;--text3:#9C9890;
@@ -204,18 +346,27 @@ input[type=color]{padding:2px 4px;width:36px;height:32px;cursor:pointer}
 <body>
 
 <div class="header">
+  <div class="header-logo">⬡ PollyPaupiettes</div>
   <div class="header-logo">⬡ Gestionnaire</div>
   <div class="tabs">
     <button class="tab active" onclick="switchTab('stock')">
+      <svg viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+      Stock
       <svg viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>Stock
     </button>
     <button class="tab" onclick="switchTab('fab')">
+      <svg viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+      Fabrication
       <svg viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>Fabrication
     </button>
     <button class="tab" onclick="switchTab('contacts')">
+      <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      Contacts
       <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>Contacts
     </button>
     <button class="tab" onclick="switchTab('projects')">
+      <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      Projets
       <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>Projets
     </button>
     <button class="tab tab-hc" onclick="switchTab('hc')">
@@ -226,15 +377,27 @@ input[type=color]{padding:2px 4px;width:36px;height:32px;cursor:pointer}
     </button>
   </div>
 </div>
-
-<div class="sync-bar">
-  <span class="sync-dot connecting" id="sync-dot"></span>
-  <span id="sync-label">Connexion à Firebase...</span>
-  <span class="sync-time" id="sync-time"></span>
-</div>
+@@ -182,90 +235,166 @@
 
 <div class="main">
 
+  <!-- STOCK -->
+  <div class="section active" id="sec-stock">
+    <div class="stats">
+      <div class="stat"><div class="stat-num" id="stat-items">–</div><div class="stat-label">Articles</div></div>
+      <div class="stat"><div class="stat-num" id="stat-cats">–</div><div class="stat-label">Catégories</div></div>
+      <div class="stat"><div class="stat-num" id="stat-low">–</div><div class="stat-label">Stock bas</div></div>
+      <div class="stat"><div class="stat-num" id="stat-empty">–</div><div class="stat-label">Épuisés</div></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Ajouter un article</div>
+      <div class="row">
+        <input type="text" id="item-name" placeholder="Nom de l'article" />
+        <input type="number" id="item-qty" placeholder="Qté" min="0" step="any" value="1" style="width:80px" />
+        <input type="text" id="item-unit" placeholder="Unité" style="width:75px;flex:none" />
+        <input type="text" id="item-cat" placeholder="Catégorie" style="width:120px;flex:none" />
+        <button class="btn btn-primary" onclick="addItem()">+ Ajouter</button>
+      </div>
 <!-- ═══ STOCK ═══════════════════════════════════════════════ -->
 <div class="section active" id="sec-stock">
   <div class="stats">
@@ -252,9 +415,25 @@ input[type=color]{padding:2px 4px;width:36px;height:32px;cursor:pointer}
       <input type="text" id="apt-addr" placeholder="Adresse (optionnel)" style="flex:1.5" />
       <button class="btn btn-primary btn-sm" onclick="addApartment()">+ Ajouter</button>
     </div>
+    <div id="stock-list"><div class="loading">Chargement...</div></div>
     <div id="apt-list"></div>
   </div>
 
+  <!-- FABRICATION -->
+  <div class="section" id="sec-fab">
+    <div class="card">
+      <div class="card-title">Nouvelle recette / produit</div>
+      <div class="row" style="margin-bottom:12px">
+        <input type="text" id="recipe-name" placeholder="Nom du produit à fabriquer" />
+        <button class="btn btn-primary" onclick="addRecipe()">+ Créer</button>
+      </div>
+      <div class="card-title">Ingrédients nécessaires</div>
+      <div id="recipe-ings" style="margin-bottom:8px;min-height:28px"></div>
+      <div class="add-ing-row">
+        <select id="ing-item"><option value="">-- Sélectionner un article --</option></select>
+        <input type="number" id="ing-qty" placeholder="Qté" min="0.01" step="any" value="1" style="width:75px;flex:none" />
+        <button class="btn btn-sm" onclick="addIngredient()">+ Ajouter</button>
+      </div>
   <!-- Filtre par appartement -->
   <div class="apt-tabs" id="apt-tabs"></div>
 
@@ -269,10 +448,17 @@ input[type=color]{padding:2px 4px;width:36px;height:32px;cursor:pointer}
       <select id="item-apt" style="width:140px;flex:none"><option value="">Appartement…</option></select>
       <button class="btn btn-primary" onclick="addItem()">+ Ajouter</button>
     </div>
+    <div class="card-title" style="margin-top:8px">Ce que tu peux fabriquer</div>
+    <div id="fab-list"></div>
   </div>
   <div id="stock-list"><div class="loading">Chargement…</div></div>
 </div>
 
+  <!-- CONTACTS -->
+  <div class="section" id="sec-contacts">
+    <div class="top-bar">
+      <span style="font-weight:600;font-size:16px">Contacts</span>
+      <button class="btn btn-primary" onclick="openContactModal()">+ Nouveau contact</button>
 <!-- ═══ FABRICATION ══════════════════════════════════════════ -->
 <div class="section" id="sec-fab">
   <div class="card">
@@ -288,11 +474,20 @@ input[type=color]{padding:2px 4px;width:36px;height:32px;cursor:pointer}
       <input type="number" id="ing-qty" value="1" min="0.01" step="any" style="width:74px;flex:none" />
       <button class="btn btn-sm" onclick="addIngredient()">+</button>
     </div>
+    <div class="contact-grid" id="contact-grid"></div>
+    <div id="contact-empty" class="empty" style="display:none">Aucun contact — ajoute le premier !</div>
   </div>
   <div class="card-title" style="margin-top:8px">Ce que tu peux fabriquer</div>
   <div id="fab-list"></div>
 </div>
 
+  <!-- PROJETS -->
+  <div class="section" id="sec-projects">
+    <div class="stats">
+      <div class="stat"><div class="stat-num" id="pstat-total">–</div><div class="stat-label">Projets</div></div>
+      <div class="stat"><div class="stat-num" id="pstat-active">–</div><div class="stat-label">En cours</div></div>
+      <div class="stat"><div class="stat-num" id="pstat-done">–</div><div class="stat-label">Terminés</div></div>
+      <div class="stat"><div class="stat-num" id="pstat-ops">–</div><div class="stat-label">Opérations</div></div>
 <!-- ═══ CONTACTS ══════════════════════════════════════════════ -->
 <div class="section" id="sec-contacts">
   <div class="top-bar">
@@ -319,6 +514,15 @@ input[type=color]{padding:2px 4px;width:36px;height:32px;cursor:pointer}
       <button class="filter-btn" onclick="setFilter('urgent',this)">Urgent</button>
       <button class="filter-btn" onclick="setFilter('done',this)">Terminés</button>
     </div>
+    <div class="top-bar">
+      <div class="filters">
+        <button class="filter-btn active" onclick="setFilter('all',this)">Tous</button>
+        <button class="filter-btn" onclick="setFilter('active',this)">En cours</button>
+        <button class="filter-btn" onclick="setFilter('waiting',this)">En attente</button>
+        <button class="filter-btn" onclick="setFilter('urgent',this)">Urgent</button>
+        <button class="filter-btn" onclick="setFilter('done',this)">Terminés</button>
+      </div>
+      <button class="btn btn-primary" onclick="openProjectModal()">+ Nouveau projet</button>
     <button class="btn btn-primary" onclick="openProjectModal()">+ Nouveau projet</button>
   </div>
   <div id="project-list"></div>
@@ -340,6 +544,8 @@ input[type=color]{padding:2px 4px;width:36px;height:32px;cursor:pointer}
       <input type="color" id="hc-group-color" value="#E24B4A" title="Couleur" />
       <button class="btn btn-red" onclick="addHCGroup()">+ Ajouter</button>
     </div>
+    <div id="project-list"></div>
+    <div id="proj-empty" class="empty" style="display:none">Aucun projet — crée le premier !</div>
   </div>
   <div class="hc-grid" id="hc-grid"></div>
   <div id="hc-empty" class="empty" style="display:none">Aucun groupe — ajoute le premier !</div>
@@ -382,12 +588,18 @@ input[type=color]{padding:2px 4px;width:36px;height:32px;cursor:pointer}
   </div>
 </div>
 
+<!-- MODAL CONTACT -->
 </div><!-- /main -->
 
 <!-- ── MODAL CONTACT ── -->
 <div class="modal-overlay" id="contact-modal" style="display:none" onclick="closeModalIf(event,'contact-modal')">
   <div class="modal">
     <div class="modal-title" id="cmodal-title">Nouveau contact</div>
+    <div class="field"><label>Nom *</label><input type="text" id="c-name" /></div>
+    <div class="field"><label>Rôle / Entreprise</label><input type="text" id="c-role" /></div>
+    <div class="field"><label>Email</label><input type="email" id="c-email" /></div>
+    <div class="field"><label>Téléphone</label><input type="tel" id="c-phone" /></div>
+    <div class="field"><label>Notes</label><textarea id="c-notes" placeholder="Informations complémentaires..."></textarea></div>
     <div class="field"><label>Nom *</label><input type="text" id="c-name"/></div>
     <div class="field"><label>Rôle / Entreprise</label><input type="text" id="c-role"/></div>
     <div class="field-row">
@@ -398,15 +610,24 @@ input[type=color]{padding:2px 4px;width:36px;height:32px;cursor:pointer}
     <div class="modal-actions">
       <button id="c-del-btn" class="btn btn-danger left" onclick="deleteContact()" style="display:none">Supprimer</button>
       <button class="btn" onclick="closeModal('contact-modal')">Annuler</button>
-      <button class="btn btn-primary" onclick="saveContact()">Enregistrer</button>
-    </div>
+@@ -274,26 +403,28 @@
   </div>
 </div>
 
+<!-- MODAL PROJET -->
 <!-- ── MODAL PROJET ── -->
 <div class="modal-overlay" id="project-modal" style="display:none" onclick="closeModalIf(event,'project-modal')">
   <div class="modal">
     <div class="modal-title" id="pmodal-title">Nouveau projet</div>
+    <div class="field"><label>Nom du projet *</label><input type="text" id="p-name" /></div>
+    <div class="field"><label>Description</label><textarea id="p-desc" placeholder="Objectif, contexte..."></textarea></div>
+    <div class="field"><label>Statut</label>
+      <select id="p-status">
+        <option value="active">En cours</option>
+        <option value="waiting">En attente</option>
+        <option value="urgent">Urgent</option>
+        <option value="done">Terminé</option>
+      </select>
     <div class="field"><label>Nom *</label><input type="text" id="p-name"/></div>
     <div class="field"><label>Description</label><textarea id="p-desc" placeholder="Objectif, contexte…"></textarea></div>
     <div class="field-row">
@@ -420,19 +641,19 @@ input[type=color]{padding:2px 4px;width:36px;height:32px;cursor:pointer}
       </div>
       <div class="field"><label>Date limite</label><input type="date" id="p-date"/></div>
     </div>
+    <div class="field"><label>Date limite</label><input type="date" id="p-date" /></div>
     <div class="field">
+      <label>Opérations / Tâches</label>
+      <div id="ops-tags" style="margin-bottom:8px;min-height:24px"></div>
       <label>Opérations</label>
       <div id="ops-tags" style="margin-bottom:6px;min-height:22px"></div>
       <div class="add-ing-row">
+        <input type="text" id="new-op" placeholder="Ajouter une opération..." />
         <input type="text" id="new-op" placeholder="Ajouter une opération…"/>
         <button class="btn btn-sm" onclick="addOp()">+</button>
       </div>
     </div>
-    <div class="modal-actions">
-      <button id="p-del-btn" class="btn btn-danger left" onclick="deleteProject()" style="display:none">Supprimer</button>
-      <button class="btn" onclick="closeModal('project-modal')">Annuler</button>
-      <button class="btn btn-primary" onclick="saveProject()">Enregistrer</button>
-    </div>
+@@ -305,11 +436,55 @@
   </div>
 </div>
 
@@ -482,33 +703,67 @@ input[type=color]{padding:2px 4px;width:36px;height:32px;cursor:pointer}
 </div>
 
 <script>
+// ╔══════════════════════════════════════════════════════════════╗
+// ║  COLLE ICI TA CONFIG FIREBASE                               ║
+// ║  (Paramètres du projet → Général → Tes applications)        ║
+// ╚══════════════════════════════════════════════════════════════╝
 // ╔══════════════════════════════════════════════════════════╗
 // ║  COLLE ICI TA CONFIG FIREBASE                           ║
 // ╚══════════════════════════════════════════════════════════╝
 const firebaseConfig = {
   apiKey: "AIzaSyAYxeEWQNCdjMcgtud9THWHGY2ZatfK9ig",
   authDomain: "data-polipopo.firebaseapp.com",
-  databaseURL: "https://data-polipopo-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "data-polipopo",
-  storageBucket: "data-polipopo.firebasestorage.app",
+@@ -319,117 +494,172 @@
   messagingSenderId: "359231173160",
   appId: "1:359231173160:web:e232475bf1ca396d963b1d"
 };
+// ══════════════════════════════════════════════════════════════
 // ══════════════════════════════════════════════════════════
 
+// ── INIT FIREBASE ────────────────────────────────────────────
 const app = firebase.initializeApp(firebaseConfig);
 const db  = firebase.database();
 const REF = db.ref('gestionnaire');
 
+let state = { items:[], recipes:[], contacts:[], projects:[] };
 const EMPTY_STATE = {items:[],apartments:[],recipes:[],contacts:[],projects:[],hcGroups:[],transactions:[]};
 let state = JSON.parse(JSON.stringify(EMPTY_STATE));
 let currentRecipeIngs=[], currentOps=[];
+let editingContactId=null, editingProjectId=null, projFilter='all';
+let isRemoteUpdate = false;   // évite les boucles save → receive → save
 let editingContactId=null, editingProjectId=null;
 let editingAptId=null, editingHCGroupId=null, editingHCProductId=null, editingHCProductGroupId=null;
 let projFilter='all', activeApt='all', finFilter='all', finTypeFilter='all';
 let isRemote=false;
 
 const COLORS=[['#E1F5EE','#0F6E56'],['#E6F1FB','#185FA5'],['#FAEEDA','#854F0B'],['#FBEAF0','#993556'],['#EAF3DE','#3B6D11'],['#FCEBEB','#A32D2D'],['#EEEDFE','#534AB7'],['#F1EFE8','#5F5E5A']];
+const STATUS_LABELS={active:'En cours',waiting:'En attente',urgent:'Urgent',done:'Terminé'};
+const STATUS_BADGE={active:'badge-green',waiting:'badge-amber',urgent:'badge-red',done:'badge-gray'};
+const STATUS_DOT={active:'dot-active',waiting:'dot-waiting',urgent:'dot-urgent',done:'dot-done'};
+
+// ── SYNC FIREBASE ────────────────────────────────────────────
+function setSync(status, msg) {
+  const dot = document.getElementById('sync-dot');
+  const lbl = document.getElementById('sync-label');
+  dot.className = 'sync-dot ' + status;
+  lbl.textContent = msg;
+  lbl.style.color = status==='connected' ? 'var(--green-text)' : status==='error' ? 'var(--red-text)' : '';
+}
+function setSyncTime() {
+  const now = new Date();
+  document.getElementById('sync-time').textContent =
+    'Sync ' + now.toLocaleTimeString('fr-FR', {hour:'2-digit',minute:'2-digit',second:'2-digit'});
+}
+
+// Écoute les changements en temps réel
+REF.on('value', snapshot => {
+  const data = snapshot.val();
+  isRemoteUpdate = true;
+  state = Object.assign({items:[],recipes:[],contacts:[],projects:[]}, data || {});
+  // Convertit les objets Firebase (pas de tableaux) en vrais tableaux
+  ['items','recipes','contacts','projects'].forEach(k => {
+    if (state[k] && !Array.isArray(state[k])) state[k] = Object.values(state[k]);
+    else if (!state[k]) state[k] = [];
 const SL={active:'En cours',waiting:'En attente',urgent:'Urgent',done:'Terminé'};
 const SB={active:'badge-green',waiting:'badge-amber',urgent:'badge-red',done:'badge-gray'};
 const SD={active:'dot-active',waiting:'dot-waiting',urgent:'dot-urgent',done:'dot-done'};
@@ -532,6 +787,27 @@ REF.on('value',snap=>{
     else if(!g.products) g.products=[];
   });
   render();
+  setSync('connected', '● Connecté — données synchronisées');
+  setSyncTime();
+  isRemoteUpdate = false;
+}, error => {
+  setSync('error', '✕ Erreur de connexion — vérifie ta config Firebase');
+});
+
+// Connexion Firebase (indicateur réseau)
+db.ref('.info/connected').on('value', snap => {
+  if (!snap.val()) setSync('connecting', 'Reconnexion...');
+});
+
+function saveData() {
+  if (isRemoteUpdate) return;
+  REF.set(state).catch(() => setSync('error', '✕ Sauvegarde échouée'));
+}
+
+// ── TABS ─────────────────────────────────────────────────────
+function switchTab(t) {
+  const tabs=['stock','fab','contacts','projects'];
+  document.querySelectorAll('.tab').forEach((el,i)=>el.classList.toggle('active',tabs[i]===t));
   setSync('connected','● Connecté — synchronisé');
   const now=new Date();
   document.getElementById('sync-time').textContent='Sync '+now.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
@@ -611,6 +887,7 @@ function setAptFilter(id,btn){
   btn.classList.add('active');
   renderStockList();
 }
+function fmt(n){return n%1===0?n:parseFloat(n.toFixed(2));}
 
 // ── STOCK ─────────────────────────────────────────────────────
 function addItem(){
@@ -620,18 +897,24 @@ function addItem(){
   const cat=document.getElementById('item-cat').value.trim()||'Général';
   const aptId=document.getElementById('item-apt').value;
   if(!name||isNaN(qty)) return;
+  state.items.push({id:Date.now().toString(),name,qty,unit,cat});
+  saveData();
   state.items.push({id:Date.now().toString(),name,qty,unit,cat,aptId});
   save();
   document.getElementById('item-name').value='';
   document.getElementById('item-qty').value='1';
   document.getElementById('item-unit').value='';
 }
+function updateQty(id,d){const it=state.items.find(x=>x.id===id);if(it){it.qty=Math.max(0,it.qty+d);saveData();}}
+function removeItem(id){state.items=state.items.filter(x=>x.id!==id);state.recipes.forEach(r=>{r.ings=r.ings.filter(i=>i.id!==id)});saveData();}
 function updateQty(id,d){const it=state.items.find(x=>x.id===id);if(it){it.qty=Math.max(0,it.qty+d);save();}}
 function removeItem(id){state.items=state.items.filter(x=>x.id!==id);state.recipes.forEach(r=>{r.ings=r.ings.filter(i=>i.id!==id)});save();}
 
 function renderStock(){
+  const cats=[...new Set(state.items.map(i=>i.cat))];
   const visible=activeApt==='all'?state.items:state.items.filter(i=>i.aptId===activeApt);
   document.getElementById('stat-items').textContent=state.items.length;
+  document.getElementById('stat-cats').textContent=cats.length;
   document.getElementById('stat-apts').textContent=state.apartments.length;
   document.getElementById('stat-low').textContent=state.items.filter(i=>i.qty>0&&i.qty<=2).length;
   document.getElementById('stat-empty').textContent=state.items.filter(i=>i.qty===0).length;
@@ -640,10 +923,12 @@ function renderStock(){
 function renderStockList(){
   const visible=activeApt==='all'?state.items:state.items.filter(i=>i.aptId===activeApt);
   const el=document.getElementById('stock-list');
+  if(!state.items.length){el.innerHTML='<div class="empty">Aucun article — ajoute le premier !</div>';return;}
   if(!visible.length){el.innerHTML='<div class="empty">Aucun article.</div>';return;}
   const cats=[...new Set(visible.map(i=>i.cat))];
   let html='';
   cats.forEach(cat=>{
+    const items=state.items.filter(i=>i.cat===cat);
     const items=visible.filter(i=>i.cat===cat);
     html+=`<div class="card"><div class="card-title">${cat}</div>`;
     items.forEach(it=>{
@@ -651,6 +936,7 @@ function renderStockList(){
       const bd=it.qty===0?'badge-red':it.qty<=2?'badge-amber':'badge-green';
       const lb=it.qty===0?'épuisé':it.qty<=2?'bas':'ok';
       html+=`<div class="item-row">
+        <span class="item-name">${it.name}</span>
         <span class="item-name">${it.name}${apt?` <span style="font-size:11px;color:var(--text3)">· ${apt.name}</span>`:''}</span>
         <span class="badge ${bd}">${lb}</span>
         <div class="qty-controls">
@@ -659,99 +945,97 @@ function renderStockList(){
           <button class="qty-btn" onclick="updateQty('${it.id}',1)">+</button>
         </div>
         <button class="btn-icon" onclick="removeItem('${it.id}')" title="Supprimer">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
         </button>
       </div>`;
     });
-    html+=`</div>`;
-  });
-  el.innerHTML=html;
-}
-
-// ── FABRICATION ───────────────────────────────────────────────
-function addIngredient(){
-  const id=document.getElementById('ing-item').value;
-  const qty=parseFloat(document.getElementById('ing-qty').value);
-  if(!id||isNaN(qty)||qty<=0) return;
-  const item=state.items.find(x=>x.id===id); if(!item) return;
-  const ex=currentRecipeIngs.find(x=>x.id===id);
-  if(ex) ex.qty+=qty; else currentRecipeIngs.push({id,qty});
-  renderIngTags();
-}
-function renderIngTags(){
-  document.getElementById('recipe-ings').innerHTML=currentRecipeIngs.map(ing=>{
-    const item=state.items.find(x=>x.id===ing.id);
-    return`<span class="ing-tag">${item?item.name:'?'} × ${fmt(ing.qty)} <span class="rm" onclick="removeIng('${ing.id}')">✕</span></span>`;
-  }).join('');
-}
-function removeIng(id){currentRecipeIngs=currentRecipeIngs.filter(x=>x.id!==id);renderIngTags();}
+@@ -458,46 +688,42 @@
 function addRecipe(){
   const name=document.getElementById('recipe-name').value.trim(); if(!name) return;
   state.recipes.push({id:Date.now().toString(),name,ings:[...currentRecipeIngs]});
+  currentRecipeIngs=[];document.getElementById('recipe-name').value='';renderIngTags();saveData();
   currentRecipeIngs=[];document.getElementById('recipe-name').value='';renderIngTags();save();
 }
+function removeRecipe(id){state.recipes=state.recipes.filter(x=>x.id!==id);saveData();}
 function removeRecipe(id){state.recipes=state.recipes.filter(x=>x.id!==id);save();renderFab();}
 function renderFab(){
   const sel=document.getElementById('ing-item');
+  sel.innerHTML='<option value="">-- Sélectionner un article --</option>';
   sel.innerHTML='<option value="">-- Sélectionner --</option>';
   state.items.forEach(it=>{sel.innerHTML+=`<option value="${it.id}">${it.name} (${fmt(it.qty)} ${it.unit})</option>`;});
   const el=document.getElementById('fab-list');
+  if(!state.recipes.length){el.innerHTML='<div class="empty">Aucune recette définie.</div>';return;}
   if(!state.recipes.length){el.innerHTML='<div class="empty">Aucune recette.</div>';return;}
   let html='';
   state.recipes.forEach(r=>{
     const feasible=r.ings.every(ing=>{const item=state.items.find(x=>x.id===ing.id);return item&&item.qty>=ing.qty;});
     const maxBatch=r.ings.length===0?'∞':Math.floor(Math.min(...r.ings.map(ing=>{const item=state.items.find(x=>x.id===ing.id);return item?item.qty/ing.qty:0;})));
+    const ingNames=r.ings.map(ing=>{const item=state.items.find(x=>x.id===ing.id);return item?`${item.name} × ${fmt(ing.qty)}`:'article supprimé';}).join(' · ');
     const ingNames=r.ings.map(ing=>{const item=state.items.find(x=>x.id===ing.id);return item?`${item.name} × ${fmt(ing.qty)}`:'?';}).join(' · ');
     html+=`<div class="recipe-card ${feasible?'feasible':'not-feasible'}">
       <div class="recipe-header">
         <span class="recipe-name">${r.name}</span>
         <div style="display:flex;gap:8px;align-items:center">
           <span class="badge ${feasible?'badge-green':'badge-red'}">${feasible?'× '+maxBatch+' faisable':'manque stock'}</span>
+          <button class="btn-icon" onclick="removeRecipe('${r.id}')">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+          </button>
           <button class="btn-icon" onclick="removeRecipe('${r.id}')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button>
         </div>
       </div>
+      <div class="ing-text">${ingNames||'Aucun ingrédient défini'}</div>
       <div class="ing-text">${ingNames||'Aucun ingrédient'}</div>
     </div>`;
   });
   el.innerHTML=html;
 }
 
+// ── CONTACTS ──────────────────────────────────────────────────
 // ── CONTACTS ─────────────────────────────────────────────────
 function getColor(name){const i=(name||'A').charCodeAt(0)%COLORS.length;return COLORS[i];}
 function openContactModal(id){
   editingContactId=id||null;
   const c=id?state.contacts.find(x=>x.id===id):null;
+  document.getElementById('cmodal-title').textContent=c?'Modifier le contact':'Nouveau contact';
+  document.getElementById('c-name').value=c?.name||'';
+  document.getElementById('c-role').value=c?.role||'';
+  document.getElementById('c-email').value=c?.email||'';
+  document.getElementById('c-phone').value=c?.phone||'';
   document.getElementById('cmodal-title').textContent=c?'Modifier':'Nouveau contact';
   document.getElementById('c-name').value=c?.name||'';document.getElementById('c-role').value=c?.role||'';
   document.getElementById('c-email').value=c?.email||'';document.getElementById('c-phone').value=c?.phone||'';
   document.getElementById('c-notes').value=c?.notes||'';
   document.getElementById('c-del-btn').style.display=c?'block':'none';
   document.getElementById('contact-modal').style.display='flex';
-  setTimeout(()=>document.getElementById('c-name').focus(),50);
-}
-function saveContact(){
-  const name=document.getElementById('c-name').value.trim(); if(!name) return;
+@@ -508,16 +734,15 @@
   const data={name,role:document.getElementById('c-role').value.trim(),email:document.getElementById('c-email').value.trim(),phone:document.getElementById('c-phone').value.trim(),notes:document.getElementById('c-notes').value.trim()};
   if(editingContactId){const c=state.contacts.find(x=>x.id===editingContactId);if(c)Object.assign(c,data);}
   else state.contacts.push({id:Date.now().toString(),...data});
+  closeModal('contact-modal');saveData();
   closeModal('contact-modal');save();
 }
 function deleteContact(){
+  if(!editingContactId||!confirm('Supprimer ce contact ?')) return;
   if(!editingContactId||!confirm('Supprimer ?')) return;
   state.contacts=state.contacts.filter(x=>x.id!==editingContactId);
+  closeModal('contact-modal');saveData();
   closeModal('contact-modal');save();
 }
 function renderContacts(){
+  const grid=document.getElementById('contact-grid');
+  const empty=document.getElementById('contact-empty');
   const grid=document.getElementById('contact-grid'),empty=document.getElementById('contact-empty');
   if(!state.contacts.length){grid.innerHTML='';empty.style.display='block';return;}
   empty.style.display='none';
   grid.innerHTML=state.contacts.map(c=>{
-    const[bg,fg]=getColor(c.name);
-    const initials=(c.name||'?').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
-    return`<div class="contact-card" onclick="openContactModal('${c.id}')">
+@@ -527,37 +752,33 @@
       <div class="avatar" style="background:${bg};color:${fg}">${initials}</div>
       <div class="contact-name">${c.name}</div>
       ${c.role?`<div class="contact-role">${c.role}</div>`:''}
+      ${c.email?`<div class="contact-info"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>${c.email}</div>`:''}
+      ${c.phone?`<div class="contact-info"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13 19.79 19.79 0 0 1 1.61 4.38 2 2 0 0 1 3.58 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 9.91a16 16 0 0 0 6.06 6.06l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>${c.phone}</div>`:''}
+      ${c.notes?`<div class="contact-notes">${c.notes.slice(0,80)}${c.notes.length>80?'…':''}</div>`:''}
       ${c.email?`<div class="contact-info"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>${c.email}</div>`:''}
       ${c.phone?`<div class="contact-info"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13 19.79 19.79 0 0 1 1.61 4.38 2 2 0 0 1 3.58 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 9.91a16 16 0 0 0 6.06 6.06l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>${c.phone}</div>`:''}
       ${c.notes?`<div class="contact-notes">${c.notes.slice(0,70)}${c.notes.length>70?'…':''}</div>`:''}
@@ -759,16 +1043,24 @@ function renderContacts(){
   }).join('');
 }
 
+// ── PROJETS ───────────────────────────────────────────────────
 // ── PROJETS ──────────────────────────────────────────────────
 function setFilter(f,btn){projFilter=f;document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderProjects();}
 function openProjectModal(id){
   editingProjectId=id||null;
   const p=id?state.projects.find(x=>x.id===id):null;
   currentOps=p?p.ops.map(o=>({...o})):[];
+  document.getElementById('pmodal-title').textContent=p?'Modifier le projet':'Nouveau projet';
+  document.getElementById('p-name').value=p?.name||'';
+  document.getElementById('p-desc').value=p?.desc||'';
+  document.getElementById('p-status').value=p?.status||'active';
+  document.getElementById('p-date').value=p?.date||'';
   document.getElementById('pmodal-title').textContent=p?'Modifier':'Nouveau projet';
   document.getElementById('p-name').value=p?.name||'';document.getElementById('p-desc').value=p?.desc||'';
   document.getElementById('p-status').value=p?.status||'active';document.getElementById('p-date').value=p?.date||'';
   document.getElementById('p-del-btn').style.display=p?'block':'none';
+  renderOpsTags();
+  document.getElementById('project-modal').style.display='flex';
   renderOpsTags();document.getElementById('project-modal').style.display='flex';
   setTimeout(()=>document.getElementById('p-name').focus(),50);
 }
@@ -777,25 +1069,32 @@ function toggleOpModal(id){const o=currentOps.find(x=>x.id===id);if(o)o.done=!o.
 function removeOpModal(id){currentOps=currentOps.filter(x=>x.id!==id);renderOpsTags();}
 function renderOpsTags(){
   document.getElementById('ops-tags').innerHTML=currentOps.map(o=>
+    `<span class="ing-tag" style="${o.done?'opacity:.55;text-decoration:line-through':''}">
+      <span onclick="toggleOpModal('${o.id}')" style="cursor:pointer">${o.done?'☑':'☐'}</span>
+      ${o.name}
     `<span class="ing-tag" style="${o.done?'opacity:.5;text-decoration:line-through':''}">
       <span onclick="toggleOpModal('${o.id}')" style="cursor:pointer">${o.done?'☑':'☐'}</span> ${o.name}
       <span class="rm" onclick="removeOpModal('${o.id}')">✕</span>
     </span>`).join('');
 }
-function saveProject(){
-  const name=document.getElementById('p-name').value.trim(); if(!name) return;
+@@ -566,26 +787,24 @@
   const data={name,desc:document.getElementById('p-desc').value.trim(),status:document.getElementById('p-status').value,date:document.getElementById('p-date').value,ops:[...currentOps]};
   if(editingProjectId){const p=state.projects.find(x=>x.id===editingProjectId);if(p)Object.assign(p,data);}
   else state.projects.push({id:Date.now().toString(),...data});
+  closeModal('project-modal');saveData();
   closeModal('project-modal');save();
 }
 function deleteProject(){
+  if(!editingProjectId||!confirm('Supprimer ce projet ?')) return;
   if(!editingProjectId||!confirm('Supprimer ?')) return;
   state.projects=state.projects.filter(x=>x.id!==editingProjectId);
+  closeModal('project-modal');saveData();
   closeModal('project-modal');save();
 }
 function toggleOp(pid,oid){
   const p=state.projects.find(x=>x.id===pid); if(!p) return;
+  const o=p.ops.find(x=>x.id===oid); if(o) o.done=!o.done;
+  saveData();
   const o=p.ops.find(x=>x.id===oid); if(o) o.done=!o.done; save();
 }
 function renderProjects(){
@@ -804,23 +1103,36 @@ function renderProjects(){
   document.getElementById('pstat-active').textContent=state.projects.filter(p=>p.status==='active').length;
   document.getElementById('pstat-done').textContent=state.projects.filter(p=>p.status==='done').length;
   document.getElementById('pstat-ops').textContent=state.projects.reduce((s,p)=>s+p.ops.length,0);
+  const el=document.getElementById('project-list');
+  const empty=document.getElementById('proj-empty');
   const el=document.getElementById('project-list'),empty=document.getElementById('proj-empty');
   if(!filtered.length){el.innerHTML='';empty.style.display='block';return;}
   empty.style.display='none';
   let html='';
-  filtered.forEach(p=>{
-    const doneOps=p.ops.filter(o=>o.done).length,totalOps=p.ops.length;
-    const pct=totalOps?Math.round(doneOps/totalOps*100):p.status==='done'?100:0;
-    const dateStr=p.date?`<span class="date-badge">📅 ${new Date(p.date+'T12:00:00').toLocaleDateString('fr-FR')}</span>`:'';
+@@ -596,37 +815,209 @@
     html+=`<div class="project-card status-${p.status}">
       <div class="project-header">
         <div>
+          <div class="project-name"><span class="dot ${STATUS_DOT[p.status]}" style="margin-right:6px"></span>${p.name}</div>
+          <div class="project-meta">
+            <span class="badge ${STATUS_BADGE[p.status]}">${STATUS_LABELS[p.status]}</span>
+            ${dateStr}
+            ${totalOps?`<span style="font-size:12px;color:var(--text2)">${doneOps}/${totalOps} op. · ${pct}%</span>`:''}
+          </div>
           <div class="project-name"><span class="dot ${SD[p.status]}" style="margin-right:6px"></span>${p.name}</div>
           <div class="project-meta"><span class="badge ${SB[p.status]}">${SL[p.status]}</span>${dateStr}${totalOps?`<span style="font-size:11px;color:var(--text2)">${doneOps}/${totalOps} op. · ${pct}%</span>`:''}</div>
         </div>
+        <button class="btn-icon btn-icon-edit" onclick="openProjectModal('${p.id}')" title="Modifier">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        </button>
         <button class="btn-icon btn-icon-edit" onclick="openProjectModal('${p.id}')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
       </div>
       ${p.desc?`<div class="project-desc">${p.desc}</div>`:''}
+      ${totalOps?`
+        <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+        <div class="ops-list">
+          ${p.ops.map(o=>`<div class="op-row"><input type="checkbox" class="op-check" ${o.done?'checked':''} onchange="toggleOp('${p.id}','${o.id}')" /><span class="op-name ${o.done?'done':''}">${o.name}</span></div>`).join('')}
+        </div>`:''}
       ${totalOps?`<div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
         <div class="ops-list">${p.ops.map(o=>`<div class="op-row"><input type="checkbox" class="op-check" ${o.done?'checked':''} onchange="toggleOp('${p.id}','${o.id}')"/><span class="op-name ${o.done?'done':''}">${o.name}</span></div>`).join('')}</div>`:''}
     </div>`;
@@ -1007,8 +1319,10 @@ function setFinCat(f,btn){
 // ── UTILS ─────────────────────────────────────────────────────
 function closeModal(id){document.getElementById(id).style.display='none';}
 function closeModalIf(e,id){if(e.target.id===id)closeModal(id);}
+function render(){renderStock();renderFab();renderContacts();renderProjects();}
 function render(){renderStock();renderFab();renderContacts();renderProjects();renderHC();renderFinances();}
 document.addEventListener('keydown',e=>{
+  if(e.key==='Escape') ['contact-modal','project-modal'].forEach(id=>{if(document.getElementById(id).style.display!=='none')closeModal(id);});
   if(e.key==='Escape')['contact-modal','project-modal','apt-modal','hc-product-modal','hc-group-modal'].forEach(id=>{
     if(document.getElementById(id).style.display!=='none')closeModal(id);
   });
