@@ -494,6 +494,16 @@ const firebaseConfig = {
   messagingSenderId: "359231173160",
   appId: "1:359231173160:web:e232475bf1ca396d963b1d"
 };
+
+const connectedRef = firebase.database().ref('.info/connected');
+
+connectedRef.on('value', (snap) => {
+    if (snap.val() === true) {
+        console.log("%c✅ Firebase CONNECTÉ", "color: green; font-weight: bold");
+    } else {
+        console.log("%c❌ Firebase déconnecté / en reconnexion...", "color: red; font-weight: bold");
+    }
+});
 // ══════════════════════════════════════════════════════════
 
 const app = firebase.initializeApp(firebaseConfig);
