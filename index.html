@@ -35,7 +35,7 @@
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
-  
+
   /* LAYOUT */
   .header { background: var(--card); border-bottom: 1px solid var(--border); padding: 0 24px; position: sticky; top: 0; z-index: 10; display: flex; align-items: center; gap: 0; }
   .header-logo { font-family: 'DM Mono', monospace; font-size: 14px; font-weight: 500; padding: 16px 24px 16px 0; border-right: 1px solid var(--border); margin-right: 24px; color: var(--text); white-space: nowrap; }
@@ -327,6 +327,7 @@
   </div>
 </div>
 
+<script>
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
   import {
@@ -362,6 +363,7 @@ let currentRecipeIngs = [], currentOps = [];
 let editingContactId = null, editingProjectId = null;
 let projFilter = 'all';
 
+const STORAGE_KEY = 'gestionnaire-data-v1';
 const COLORS = [
   ['#E1F5EE','#0F6E56'],['#E6F1FB','#185FA5'],['#FAEEDA','#854F0B'],
   ['#FBEAF0','#993556'],['#EAF3DE','#3B6D11'],['#FCEBEB','#A32D2D'],
@@ -371,8 +373,17 @@ const STATUS_LABELS = { active: 'En cours', waiting: 'En attente', urgent: 'Urge
 const STATUS_BADGE  = { active: 'badge-green', waiting: 'badge-amber', urgent: 'badge-red', done: 'badge-gray' };
 const STATUS_DOT    = { active: 'dot-active', waiting: 'dot-waiting', urgent: 'dot-urgent', done: 'dot-done' };
 
+// PERSISTENCE — localStorage (autonome pour fichier hébergé)
 // DATA
 function loadData() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) state = Object.assign({ items:[], recipes:[], contacts:[], projects:[] }, JSON.parse(raw));
+  } catch(e) {}
+  render();
+}
+function saveData() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e) {}
   const dataRef = firebaseRef(firebaseDB, 'gestionnaire');
 
   firebaseOnValue(dataRef, (snapshot) => {
